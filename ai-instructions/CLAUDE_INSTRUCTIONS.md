@@ -135,6 +135,32 @@ ai-instructions/  (instructions only — committed, never edited by Claude Code)
 
 ## Phase 0 — Scaffold, capture tooling, and fixture gate
 
+0. **Environment bootstrap (automated; no user action).** The kickoff prompt supplies the VM
+   address (`user@host`). Treat it as private: it goes only into the two local, uncommitted files
+   below and never into any repo file, commit message, or printed report.
+   - **SSH alias.** Check whether `kt-vm` already resolves with
+     `ssh -G kt-vm | awk '/^hostname /{print $2}'`. If it already maps to the given host, leave it.
+     Otherwise:
+     - create `~/.ssh` (mode 700) if it's missing;
+     - back up `~/.ssh/config` to `~/.ssh/config.bak-<timestamp>` if it exists;
+     - append a block `Host kt-vm / HostName <host> / User <user>`;
+     - `chmod 600 ~/.ssh/config`.
+
+     Never modify or remove any existing `Host` block. If a `Host kt-vm` block exists but points
+     elsewhere, 🛑 STOP and report rather than overwrite it.
+   - **Connectivity check.** `ssh -o BatchMode=yes -o ConnectTimeout=10 kt-vm true`. If it fails,
+     🛑 STOP: key-based SSH from WSL isn't working, and that's a credential problem Claude Code must
+     not try to fix (no key generation, no `ssh-copy-id`).
+   - **Denylist.** Create `.secret-denylist` (gitignored, mode 600) if absent. Add, without
+     duplicates:
+     - the VM host/IP;
+     - `git config user.email`;
+     - the user's home path `/home/thebuleganteng`.
+
+     The capture tool (step 5) appends real LiveTrack session IDs and tokens automatically.
+     Never print this file.
+   - **Commit email.** If `git config user.email` isn't a GitHub `noreply` address, note in the
+     final report that commit metadata will publish that email. Don't change the user's git config.
 1. **Connect to the existing public repo — never overwrite its history.**
    - The remote already has commits (at least `LICENSE`). If the local folder is not yet a git
      repo, attach it without touching local files:
@@ -160,10 +186,8 @@ ai-instructions/  (instructions only — committed, never edited by Claude Code)
      pattern. Pin the gitleaks Docker image version.
    - `tools/check_denylist.sh`: reads `.secret-denylist` (gitignored; one literal per line, `#`
      comments) and fails if any entry appears in staged content (`git diff --cached`). It prints
-     only the file name and line number, never the value. If `.secret-denylist` doesn't exist,
-     create it containing only comments that explain what the user should add: the VM's IP, their
-     email, and real LiveTrack session IDs/tokens. Then continue, and include in the final report
-     a reminder for the user to fill it in.
+     only the file name and line number, never the value. It must fail closed: if
+     `.secret-denylist` is missing or empty, exit non-zero. Step 0 populates it.
    - `tools/hooks/pre-commit` runs gitleaks on staged changes plus the denylist check. Enable it
      with `git config core.hooksPath tools/hooks`.
    - Before **every** push: run `gitleaks detect` over the full history plus the denylist check.
@@ -193,6 +217,9 @@ ai-instructions/  (instructions only — committed, never edited by Claude Code)
      This is read-only; it tests whether Garmin blocks GCP datacenter IPs. Record results to
      `fixtures/raw/NAME/vm_probe.json`.
    - Support `--probe-only` for a later "has this link expired yet?" check.
+   - On start, append the real session ID and token from the URL to `.secret-denylist`, skipping
+     duplicates and printing nothing. This way the scrubber self-check and the pre-commit scan
+     both know them.
 6. **Build `tools/scrub_fixtures.py --name NAME` → `fixtures/sessions/NAME/`.** The output is
    published in a public repo, so it must not allow anyone to locate or date the activity:
    - **IDs:** replace session IDs and tokens with fixed fake values everywhere, including URLs and
@@ -218,13 +245,23 @@ ai-instructions/  (instructions only — committed, never edited by Claude Code)
 7. 🛑 **Fixture gate.** If `fixtures/sessions/` has no scrubbed session:
    - Commit and push the scaffold, with the full secret scan passing first.
    - Write the summary entry.
-   - STOP and print: *"Fixtures needed. Run the recording procedure (in the chat instructions),
-     then re-run with 'Continue ai-instructions/CLAUDE_INSTRUCTIONS.md from Phase 0 step 6
-     (scrub) onward'. Before resuming, fill in `.secret-denylist` and review
-     `fixtures/sessions/<name>/scrub_report.md`."*
-   - When resuming after the scrub: 🛑 STOP once more, before committing any fixture. Print the
-     scrub report and wait for the user to type `confirmed`. Fixtures in a public repo are
-     irreversible.
+   - Ask the user for **only one thing**: *"Paste your LiveTrack share link here when your activity
+     has started."* Don't ask them to run commands, edit files, or touch `.secret-denylist`.
+   - When the link arrives:
+     1. Validate it.
+     2. Launch the capture **yourself, in the background** with `--vm-probe` (e.g. in `tmux` or
+        as a background task), logging to `fixtures/raw/<name>/capture.log`. The tool appends the
+        session ID and token to `.secret-denylist` itself (step 5); verify that it did, without
+        printing the values.
+     3. Monitor until the capture process exits on its own (idle stop plus the end-of-session
+        probes). Don't stop it early.
+     4. Continue automatically: scrub (step 6), then the review stop below.
+   - **Review stop.** Before committing any fixture, 🛑 STOP and show the user the full path to
+     `fixtures/sessions/<name>/scrub_report.md` plus a short summary of what was transformed. Wait
+     for `confirmed`. Fixtures in a public repo are irreversible.
+   - If the session is closed before the capture finishes, the resume prompt is: "Continue
+     ai-instructions/CLAUDE_INSTRUCTIONS.md from Phase 0 step 6 (scrub) onward." Resuming needs no
+     manual file edits.
 
 ## Phase 1 — Findings and fetch-strategy decision
 

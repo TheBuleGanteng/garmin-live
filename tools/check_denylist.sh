@@ -12,8 +12,11 @@
 # .secret-denylist format:
 #   <literal>        a string that must never appear in committed content
 #   !<path>          exempt one repo-relative path from scanning (e.g. a LICENSE
-#                    file the repo owner deliberately published with their name)
+#                    file the repo owner deliberately published with their name);
+#                    a trailing "/" exempts a whole directory (e.g. !ai-instructions/)
 #   # comment
+#
+# Fails closed: a missing or literal-free denylist exits non-zero.
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -30,7 +33,8 @@ if [[ ! -f "$DENYLIST" ]]; then
 #   - any real LiveTrack session IDs / tokens you have captured
 TEMPLATE
   chmod 600 "$DENYLIST"
-  echo "check_denylist: created template $DENYLIST — fill it in (see comments)." >&2
+  echo "check_denylist: FAILED — $(basename "$DENYLIST") was missing; created a template. Fill it in." >&2
+  exit 1
 fi
 
 # Load entries (strip comments and blank lines, trim whitespace).
@@ -44,14 +48,18 @@ done
 is_exempt() {
   local p
   for p in "${EXEMPT_PATHS[@]+"${EXEMPT_PATHS[@]}"}"; do
-    [[ "$1" == "$p" ]] && return 0
+    if [[ "$p" == */ ]]; then
+      [[ "$1" == "$p"* ]] && return 0
+    else
+      [[ "$1" == "$p" ]] && return 0
+    fi
   done
   return 1
 }
 
 if [[ ${#LITERALS[@]} -eq 0 ]]; then
-  echo "check_denylist: no literals in $(basename "$DENYLIST") (only comments). Nothing to check." >&2
-  exit 0
+  echo "check_denylist: FAILED — $(basename "$DENYLIST") has no literals (fail closed). Populate it." >&2
+  exit 1
 fi
 
 # Build a fixed-string pattern file for grep -F.

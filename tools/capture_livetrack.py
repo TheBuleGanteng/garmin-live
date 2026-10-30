@@ -40,7 +40,9 @@ import httpx
 from playwright.async_api import async_playwright
 
 ALLOWED_HOST = "livetrack.garmin.com"
-RAW_ROOT = Path(__file__).resolve().parent.parent / "fixtures" / "raw"
+REPO_ROOT = Path(__file__).resolve().parent.parent
+RAW_ROOT = REPO_ROOT / "fixtures" / "raw"
+DENYLIST_PATH = REPO_ROOT / ".secret-denylist"
 DATA_RESOURCE_TYPES = {"xhr", "fetch"}
 BROWSER_LIKE_HEADERS = {
     "User-Agent": (
@@ -101,6 +103,53 @@ def validate_livetrack_url(url: str) -> str:
     if parts.username or parts.password:
         raise SystemExit("refusing: URL must not contain userinfo")
     return url
+
+
+def extract_secret_segments(url: str) -> list[str]:
+    """Return the session ID and token from a share URL, plus any other ID-like path segments.
+
+    Handles the ``/session/<id>/token/<token>`` shape and falls back to any UUID-like or
+    long opaque segment, so a changed URL layout still gets its identifiers denylisted.
+    """
+    parts = [p for p in urlsplit(url).path.split("/") if p]
+    found: list[str] = []
+    for i, seg in enumerate(parts):
+        if seg.lower() in ("session", "token") and i + 1 < len(parts):
+            found.append(parts[i + 1])
+    for seg in parts:
+        if (_UUIDISH.fullmatch(seg) or _LONG_TOKEN.fullmatch(seg)) and seg not in found:
+            found.append(seg)
+    return [f for f in found if len(f) >= 8]
+
+
+def register_in_denylist(url: str, denylist: Path = DENYLIST_PATH) -> int:
+    """Append the URL's session ID and token to the gitignored denylist, skipping duplicates.
+
+    Prints nothing (the values are secrets). Returns the number of entries added. The file is
+    created (mode 600) if missing so the scrubber self-check and the pre-commit hook know the
+    identifiers from the first capture onward.
+    """
+    values = extract_secret_segments(url)
+    if not values:
+        return 0
+    existing: set[str] = set()
+    if denylist.exists():
+        for raw_line in denylist.read_text().splitlines():
+            entry = raw_line.split("#", 1)[0].strip()
+            if entry:
+                existing.add(entry)
+    new_values = [v for v in values if v not in existing]
+    if not new_values:
+        return 0
+    denylist.parent.mkdir(parents=True, exist_ok=True)
+    with denylist.open("a") as fh:
+        if denylist.stat().st_size and not denylist.read_text().endswith("\n"):
+            fh.write("\n")
+        fh.write("# LiveTrack identifiers added automatically by tools/capture_livetrack.py\n")
+        for v in new_values:
+            fh.write(v + "\n")
+    denylist.chmod(0o600)
+    return len(new_values)
 
 
 @dataclass
@@ -517,11 +566,14 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="skip the browser; re-probe endpoints from a prior run",
     )
     p.add_argument("--raw-root", type=Path, default=RAW_ROOT, help=argparse.SUPPRESS)
+    p.add_argument("--denylist", type=Path, default=DENYLIST_PATH, help=argparse.SUPPRESS)
     return p.parse_args(argv)
 
 
 async def amain(args: argparse.Namespace) -> int:
     url = validate_livetrack_url(args.url)
+    added = register_in_denylist(url, args.denylist)
+    print(f"[capture] denylist: {added} new identifier(s) registered in {args.denylist.name}")
     raw_dir = args.raw_root / args.name
     responses_dir = raw_dir / "responses"
     responses_dir.mkdir(parents=True, exist_ok=True)
@@ -550,7 +602,7 @@ async def amain(args: argparse.Namespace) -> int:
             "name": args.name,
             "share_url": url,
             "started_at": utc_now_iso(),
-            "args": vars(args) | {"raw_root": str(args.raw_root)},
+            "args": {k: (str(v) if isinstance(v, Path) else v) for k, v in vars(args).items()},
         },
     )
     existing = len(list(responses_dir.glob("*.json")))

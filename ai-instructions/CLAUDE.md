@@ -10,8 +10,9 @@ is a *future* build — keep the seam for it (see `events` + `Notifier`), but do
 **Laptop repo:** `/home/thebuleganteng/01_Repos/06_personal_work/garmin-live` (WSL)
 **GitHub:** `git@github.com:TheBuleGanteng/garmin-live.git` (branch `main`) — **PUBLIC repo,
 already created by the user.** Never create it, change its visibility, or rewrite its history.
-**VM:** SSH alias `kt-vm` (defined in the user's `~/.ssh/config`; the real IP must never appear in
-this repo), infra repo `/home/matt/vm-infrastructure` (separate repo), submodule `apps/garmin-live`
+**VM:** SSH alias `kt-vm`. Claude Code creates it in `~/.ssh/config` from the VM address given in
+the kickoff prompt (CLAUDE_INSTRUCTIONS Phase 0 step 0); the real IP must never appear in this
+repo. Infra repo `/home/matt/vm-infrastructure` (separate repo), submodule `apps/garmin-live`
 **Instruction files:** live in `ai-instructions/`. That folder holds instructions only — never put
 code, tests, fixtures, config, or logs there, and never edit the instruction files themselves.
 
@@ -52,8 +53,9 @@ code, tests, fixtures, config, or logs there, and never edit the instruction fil
       (`docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest ...`) — pin the image version.
     - `tools/check_denylist.sh`: fails if any literal string listed in the **gitignored** local file
       `.secret-denylist` appears in staged content. The user's private values (VM IP, email, real
-      LiveTrack IDs) live only in that file. Create it with placeholder comments if absent and tell
-      the user to fill it in; never print its contents.
+      LiveTrack IDs/tokens) live only in that file. Claude Code creates and populates it
+      automatically (Phase 0 step 0, and the capture tool appends LiveTrack values); never print
+      its contents.
     - Both are wired into a git `pre-commit` hook **and** run explicitly before each `git push`.
       Never bypass with `--no-verify`. A finding → STOP (do not push), report the file and rule
       only (never the matched value).
