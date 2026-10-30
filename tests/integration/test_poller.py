@@ -1,11 +1,12 @@
 """Poller behaviour with a scripted fetcher and a fake clock: incremental ingest, dedupe,
-stale/resumed, backoff on 5xx/429, Garmin end signal, expiry, max hours, restart-resume,
-events and the NoopNotifier."""
+stale/resumed (measured from Garmin's timestamps for live sessions, ingest time for historical
+replays), backoff on 5xx/429, Garmin end signal (including a session that is already over on
+the first poll), expiry, max hours, restart-resume, events and the NoopNotifier."""
 
 from __future__ import annotations
 
 import dataclasses
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 
 from garmin_live.events import bus as ev
 from garmin_live.events.bus import EventBus
@@ -304,3 +305,94 @@ async def test_adopt_new_starts_tasks_for_sessions_created_elsewhere(
     assert poller.adopt_new() == 0  # already running
     assert await wait_until(lambda: repo.count_trackpoints(s.id) == 1)
     await poller.stop()
+
+
+# ---------------------------------------------------------------- FIX 1: freshness semantics
+async def test_stale_is_measured_from_garmin_time_for_live_sessions(
+    repo: Repo, notifier: NoopNotifier
+) -> None:
+    # The only point is already 290 s old (by Garmin's clock) when it is ingested, e.g. the watch
+    # buffered it. The next poll, 20 s later, finds nothing new: by Garmin's time the data is now
+    # ~310 s old → stale, even though ingest happened only 20 s ago.
+    clock = FakeClock(T0 + timedelta(seconds=290))
+    fetcher = FakeFetcher(batches=[[make_point(0, 0)], [], []])
+    poller = _poller(repo, fetcher, clock, notifier)
+    s = _session(repo, clock)
+    poller.start_session(s)
+    assert await wait_until(lambda: ev.STALE in _types(repo, s.id))
+    await poller.stop()
+    stale = next(e for e in repo.list_events(s.id) if e.type == ev.STALE)
+    assert 300 < stale.payload["since_s"] <= 330  # measured from the point's timestamp (T0)
+    # flagged by the very next poll (events: new_points, stale), not after 300 s of ingest gap
+    assert _types(repo, s.id)[:2] == [ev.NEW_POINTS, ev.STALE]
+    final = repo.get_session(s.id)
+    assert final is not None and final.stale is True and final.is_active
+
+
+async def test_stale_for_historical_timeline_uses_ingest_time(
+    repo: Repo, notifier: NoopNotifier
+) -> None:
+    # Replayed fixtures carry historical timestamps. A point from 2020 ingested "now" must not be
+    # stale on the next poll; staleness then follows the ingest gap, as for a live session.
+    clock = FakeClock(T0)
+    old_point = make_point(0, 0, start=datetime(2020, 1, 1, 6, 0, 0, tzinfo=UTC))
+    fetcher = FakeFetcher(batches=[[old_point]] + [[] for _ in range(60)])
+    poller = _poller(repo, fetcher, clock, notifier)
+    s = _session(repo, clock)
+    poller.start_session(s)
+    assert await wait_until(lambda: ev.STALE in _types(repo, s.id))
+    await poller.stop()
+    stale = next(e for e in repo.list_events(s.id) if e.type == ev.STALE)
+    assert 300 < stale.payload["since_s"] < 400  # ~300 s without ingest, not six years
+    assert len(fetcher.begins) >= 14  # about fifteen 20 s polls, not the second one
+
+
+# ---------------------------------------------------------------- FIX 2: ended on first poll
+async def test_already_ended_session_ends_on_first_poll_with_all_points(
+    repo: Repo, notifier: NoopNotifier
+) -> None:
+    # Tracking a link to a workout that finished hours ago: Garmin reports it ended on the very
+    # first session check. The poller must still ingest the full trackpoint list once, then end
+    # with garmin_end, on that same poll, without flagging anything stale.
+    clock = FakeClock(T0 + timedelta(hours=3))
+    ended = make_session_info(T0, ended_at=T0 + timedelta(minutes=15))
+    points = [make_point(t, 3.0 * t) for t in range(0, 900, 10)]  # 90 points, 2.67 km
+    fetcher = FakeFetcher(batches=[points], sessions=[ended])
+    poller = _poller(repo, fetcher, clock, notifier)
+    s = _session(repo, clock)
+    poller.start_session(s)
+    assert await poller.wait_first_poll(s.id)
+    assert await wait_until(lambda: not (repo.get_session(s.id) or s).is_active)
+    final = repo.get_session(s.id)
+    assert final is not None and final.status == st.ENDED and final.end_reason == "garmin_end"
+    assert final.garmin_end == ended.end and final.stale is False
+    assert repo.count_trackpoints(s.id) == len(points)
+    assert fetcher.session_calls == 1 and len(fetcher.begins) == 1  # exactly one poll
+    assert poller.sleeps == []  # type: ignore[attr-defined]  # ended before the first sleep
+    types = _types(repo, s.id)
+    assert types[0] == ev.NEW_POINTS and types[-1] == ev.SESSION_ENDED
+    assert types.count(ev.SPLIT_COMPLETED) == 2 and ev.STALE not in types
+    done = next(e for e in repo.list_events(s.id) if e.type == ev.SESSION_ENDED)
+    assert done.payload == {"reason": "garmin_end", "status": st.ENDED, "points": len(points)}
+    assert not poller.is_running(s.id) and fetcher.closed
+
+
+async def test_live_session_is_unaffected_by_first_poll_end_check(
+    repo: Repo, notifier: NoopNotifier
+) -> None:
+    clock = FakeClock(T0 + timedelta(minutes=5))
+    active = make_session_info(T0)  # Garmin's live placeholder: end = start + 24 h
+    fetcher = FakeFetcher(
+        batches=[[make_point(0, 0), make_point(300, 900)], [make_point(320, 960)], []],
+        sessions=[active],
+    )
+    poller = _poller(repo, fetcher, clock, notifier)
+    s = _session(repo, clock)
+    poller.start_session(s)
+    assert await poller.wait_first_poll(s.id)
+    assert await wait_until(lambda: len(fetcher.begins) >= 3)
+    await poller.stop()
+    final = repo.get_session(s.id)
+    assert final is not None and final.is_active and final.end_reason is None
+    assert repo.count_trackpoints(s.id) == 3 and fetcher.session_calls >= 1
+    assert ev.SESSION_ENDED not in _types(repo, s.id)

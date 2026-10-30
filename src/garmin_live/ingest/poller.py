@@ -26,7 +26,7 @@ from garmin_live.livetrack.fetch_http import (
     HttpFetcher,
     SessionExpiredError,
 )
-from garmin_live.livetrack.models import Trackpoint
+from garmin_live.livetrack.models import Trackpoint, timeline_is_current
 from garmin_live.livetrack.parser import LiveTrackSchemaError
 from garmin_live.store import repo as st
 from garmin_live.store.repo import Repo, SessionRow
@@ -58,6 +58,21 @@ def default_fetcher_factory(session: SessionRow) -> Fetcher:
     return HttpFetcher(session.garmin_session_id, session.token, base_url=session.api_base)
 
 
+def data_reference_time(
+    newest_point: datetime | None, last_ingest: datetime | None, now: datetime
+) -> datetime | None:
+    """The instant staleness is measured from.
+
+    For a live session it is Garmin's own timestamp of the newest stored point, the same basis
+    as `get_live_status.data_freshness_seconds`, so a slow or failing poller cannot hide a data
+    gap. When the session timeline is historical (replayed fixtures), Garmin's timestamps are
+    years old, so the ingest time is used instead and replays behave like live sessions.
+    """
+    if newest_point is not None and timeline_is_current(newest_point, now):
+        return newest_point
+    return last_ingest
+
+
 class _SessionDone(Exception):  # noqa: N818 - control-flow signal, not an error
     """Raised inside the loop when the session reached a terminal state."""
 
@@ -65,8 +80,8 @@ class _SessionDone(Exception):  # noqa: N818 - control-flow signal, not an error
 @dataclass(slots=True)
 class _LoopState:
     session: SessionRow
-    begin: datetime | None
-    last_received_at: datetime | None
+    begin: datetime | None  # Garmin's timestamp of the newest stored point
+    last_received_at: datetime | None  # wall-clock time new points were last ingested
     stale_flagged: bool
     last_split: int
     garmin_end: datetime | None = None
@@ -224,11 +239,14 @@ class Poller:
             await self._end(sid, st.ENDED, "max_hours", now)
             raise _SessionDone
         try:
+            ended = False
             if state.last_session_check is None:
-                await self._check_session(fetcher, state, now)  # validates the session first
+                # First poll validates the session. If Garmin already reports it ended (a link to
+                # a finished workout), still fetch and ingest the full list once, then end.
+                ended = await self._check_session(fetcher, state, now)
             points = await fetcher.fetch_trackpoints(state.begin)
-            await self._ingest(points, state, now)
-            if await self._check_session(fetcher, state, now):
+            await self._ingest(points, state, now, allow_stale=not ended)
+            if ended or await self._check_session(fetcher, state, now):
                 await self._end(sid, st.ENDED, "garmin_end", now)
                 raise _SessionDone
         except SessionExpiredError as exc:
@@ -264,7 +282,16 @@ class Poller:
             raise _SessionDone
         return info.is_ended(now, previous_end=previous_end)
 
-    async def _ingest(self, points: list[Trackpoint], state: _LoopState, now: datetime) -> None:
+    async def _ingest(
+        self,
+        points: list[Trackpoint],
+        state: _LoopState,
+        now: datetime,
+        *,
+        allow_stale: bool = True,
+    ) -> None:
+        """Store new points and update freshness. `allow_stale=False` skips stale detection for a
+        poll that is about to end the session (an ended session is never stale)."""
         sid = state.session.id
         inserted = self._repo.insert_trackpoints(sid, points)
         state.last_poll_inserted = inserted
@@ -294,15 +321,13 @@ class Poller:
                 payload = {"split": split, "distance_m": round(split * self._split_m)}
                 await self._bus.emit(sid, ev.SPLIT_COMPLETED, payload)
             state.last_split = max(state.last_split, split_now)
-        elif (
-            not state.stale_flagged
-            and state.last_received_at is not None
-            and (now - state.last_received_at).total_seconds() > STALE_AFTER_S
-        ):
-            state.stale_flagged = True
-            fields["stale"] = True
-            since = round((now - state.last_received_at).total_seconds())
-            await self._bus.emit(sid, ev.STALE, {"since_s": since})
+        elif allow_stale and not state.stale_flagged:
+            reference = data_reference_time(state.begin, state.last_received_at, now)
+            if reference is not None and (now - reference).total_seconds() > STALE_AFTER_S:
+                state.stale_flagged = True
+                fields["stale"] = True
+                since = round((now - reference).total_seconds())
+                await self._bus.emit(sid, ev.STALE, {"since_s": since})
         self._repo.update_session(sid, **fields)
 
     async def _handle_error(

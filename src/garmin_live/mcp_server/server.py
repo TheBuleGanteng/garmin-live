@@ -21,8 +21,10 @@ from garmin_live.service import TrackingService
 
 INSTRUCTIONS = (
     "garmin-live exposes a single athlete's Garmin LiveTrack session (a live running/cycling "
-    "workout) as read-only tools. Workflow: when given a LiveTrack share URL call start_tracking "
-    "once; then answer questions with get_live_status (now), get_splits (per-km), get_trend "
+    "workout) as read-only tools. Workflow: when given a LiveTrack share link, either the full "
+    "https://livetrack.garmin.com/session/<id>/token/<token> URL or a https://gar.mn/<code> short "
+    "link, call start_tracking once (short links are expanded server-side); then answer "
+    "questions with get_live_status (now), get_splits (per-km), get_trend "
     "(recent drift of pace/hr/elevation/cadence) and get_session_summary (whole workout). "
     "session_id is optional and defaults to the most recent active session. Units are metric, "
     "pace is m:ss per km, and fields Garmin did not provide are null with a reason. No "

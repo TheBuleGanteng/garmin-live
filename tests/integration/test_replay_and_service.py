@@ -6,6 +6,7 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import AsyncIterator
+from datetime import timedelta
 from typing import Any
 
 import httpx
@@ -21,7 +22,7 @@ from garmin_live.replay.server import ReplayConfig, ReplayServer, load_fixture
 from garmin_live.service import SHORT_LINK_EXPAND_FAILED, ServiceError, TrackingService
 from garmin_live.store import repo as st
 from garmin_live.store.repo import Repo, SessionRow
-from tests.conftest import FakeFetcher, make_point, wait_until
+from tests.conftest import T0, FakeClock, FakeFetcher, make_point, wait_until
 
 SID = "0f0f0f0f-aaaa-4bbb-8ccc-dddddddd0000"
 TOK = "FAKETOKENnotreal0000ABCDEFGHI"
@@ -237,6 +238,37 @@ async def test_service_validation_and_limits(repo: Repo, notifier: NoopNotifier)
     listed = service.list_sessions()
     assert len(listed) == 3 and {s["status"] for s in listed} == {st.ACTIVE}
     await poller.stop()
+
+
+async def test_list_sessions_ages_and_stale_semantics(repo: Repo, notifier: NoopNotifier) -> None:
+    clock = FakeClock(T0 + timedelta(seconds=130))
+    poller = Poller(repo, EventBus(repo, notifier), poll_min_seconds=20, max_session_hours=12)
+    service = TrackingService(repo, poller, athlete_max_hr=None, clock=clock)
+    s = repo.create_session(
+        label="x",
+        garmin_session_id="g",
+        token="t",
+        api_base="http://127.0.0.1:1",
+        poll_interval_s=20,
+    )
+    # no points yet: both ages are null
+    [row] = service.list_sessions()
+    assert row["last_data_age_s"] is None and row["last_ingest_age_s"] is None
+    assert row["stale"] is False
+    # newest Garmin timestamp T0+20 s, ingested (last_point_at) at T0+100 s, now = T0+130 s
+    repo.insert_trackpoints(s.id, [make_point(0, 0), make_point(20, 60)])
+    repo.update_session(s.id, last_point_at=T0 + timedelta(seconds=100), stale=True)
+    [row] = service.list_sessions()
+    assert row["last_data_age_s"] == 110  # Garmin's time, not ingest time
+    assert row["last_ingest_age_s"] == 30
+    assert row["stale"] is True and row["points"] == 2
+    # ended / expired / stopped sessions are never reported as stale, whatever the stored flag
+    for status in (st.ENDED, st.EXPIRED, st.STOPPED):
+        repo.update_session(s.id, status=status, stale=True)
+        [row] = service.list_sessions()
+        assert row["status"] == status and row["stale"] is False
+        assert row["last_data_age_s"] == 110 and row["last_ingest_age_s"] == 30
+    await service.aclose()
 
 
 async def test_start_tracking_expands_short_links(repo: Repo, notifier: NoopNotifier) -> None:

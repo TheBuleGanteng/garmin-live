@@ -139,12 +139,16 @@ class TrackingService:
 
     # ---- queries ------------------------------------------------------------------------
     def list_sessions(self) -> list[dict[str, object]]:
+        """Sessions newest first.
+
+        `last_data_age_s` is measured from Garmin's own timestamp of the newest stored trackpoint
+        (the same basis as `get_live_status.data_freshness_seconds`); `last_ingest_age_s` from the
+        last time the poller received new points (`sessions.last_point_at`). Only active sessions
+        can be `stale`; ended, expired, stopped or errored ones never are.
+        """
         now = self._clock()
         out: list[dict[str, object]] = []
         for s in self._repo.list_sessions():
-            age = (
-                None if s.last_point_at is None else round((now - s.last_point_at).total_seconds())
-            )
             out.append(
                 {
                     "session_id": s.id,
@@ -152,8 +156,9 @@ class TrackingService:
                     "status": s.status,
                     "end_reason": s.end_reason,
                     "started": s.created_at.isoformat(timespec="seconds"),
-                    "last_data_age_s": age,
-                    "stale": s.stale,
+                    "last_data_age_s": _age_s(now, self._repo.last_point_time(s.id)),
+                    "last_ingest_age_s": _age_s(now, s.last_point_at),
+                    "stale": s.stale if s.is_active else False,
                     "points": self._repo.count_trackpoints(s.id),
                     "ingest_error": s.last_error,
                 }
@@ -249,6 +254,10 @@ class TrackingService:
                 "error_count": session.error_count,
             },
         }
+
+
+def _age_s(now: datetime, then: datetime | None) -> int | None:
+    return None if then is None else max(0, round((now - then).total_seconds()))
 
 
 def _clean_label(label: str | None) -> str | None:

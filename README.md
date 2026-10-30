@@ -99,7 +99,7 @@ reason, never invented.
 | Tool | Returns | When Claude should call it |
 |---|---|---|
 | `start_tracking(livetrack_url, label?)` | `session_id`, status, first-ingest result | Once, when you give it a LiveTrack URL (full or `gar.mn`) |
-| `list_sessions()` | id, label, status, started, last data age, ingest errors | To find a session or check what is tracked |
+| `list_sessions()` | id, label, status, started, `last_data_age_s` (Garmin time of newest point), `last_ingest_age_s` (last receipt of new points), `stale` (active sessions only), ingest errors | To find a session or check what is tracked |
 | `get_live_status(session_id?)` | elapsed / moving time, distance, current (rolling) and average pace, current/avg HR, cadence, elevation gain/loss, `data_freshness_seconds`, `stale`, ingest health | "How is it going right now?" |
 | `get_splits(session_id?, split_distance_m=1000)` | per-split time, pace, avg HR, elevation +/- (boundaries interpolated) | Kilometre comparisons, fade detection |
 | `get_trend(session_id?, metric, window_minutes=10, bucket_seconds=60)` | bucketed series for `pace` / `hr` / `elevation` / `cadence` | Drift questions ("is HR creeping up?") |

@@ -5,6 +5,17 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 
+#: A session timeline counts as "current" when its timestamps lie within this many seconds of
+#: the wall clock. Replayed historical fixtures fall outside it.
+TIMELINE_WINDOW_S = 48 * 3600
+
+
+def timeline_is_current(ts: datetime, now: datetime) -> bool:
+    """True when `ts` lies within two days of `now`, i.e. the session is live rather than a
+    replayed historical fixture, so wall-clock rules (end <= now, staleness measured from
+    Garmin's own timestamps) apply."""
+    return abs((now - ts).total_seconds()) < TIMELINE_WINDOW_S
+
 
 @dataclass(frozen=True, slots=True)
 class Trackpoint:
@@ -49,5 +60,4 @@ class SessionInfo:
         """
         if previous_end is not None and (previous_end - self.end).total_seconds() > 60:
             return True
-        timeline_is_current = abs((now - self.start).total_seconds()) < 48 * 3600
-        return timeline_is_current and self.end <= now
+        return timeline_is_current(self.start, now) and self.end <= now

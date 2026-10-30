@@ -43,9 +43,15 @@ def register_tools(server: MCPServer, service: TrackingService) -> None:
     @server.tool(
         name="list_sessions",
         description=(
-            "List tracked sessions with id, label, status (active/ended/expired/stopped/error), "
-            "when tracking started, the age of the latest data and ingest errors. Call this to "
-            "find a session_id or to check whether anything is being tracked right now."
+            "List tracked sessions (newest first) with id, label, status "
+            "(active/ended/expired/stopped/error), when tracking started, points, ingest errors "
+            "and two ages in seconds: last_data_age_s = now minus Garmin's own timestamp of the "
+            "newest trackpoint (how old the data itself is; same basis as data_freshness_seconds) "
+            "and last_ingest_age_s = now minus the last time this server received new points "
+            "(for diagnosing the poller: if it keeps growing while the athlete is still moving, "
+            "ingest is failing). stale is true only for an active session with no fresh data for "
+            "over 5 minutes; ended, expired or stopped sessions are never stale. Call this to find "
+            "a session_id or to check whether anything is being tracked right now."
         ),
     )
     async def list_sessions() -> dict[str, Any]:
