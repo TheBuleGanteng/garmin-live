@@ -85,10 +85,10 @@ keeps the MCP streaming responses flowing. Your endpoint is then
 3. In a new chat, enable the connector and ask *"list my Garmin sessions"*. Then, when you start an
    activity, paste the LiveTrack share link and ask Claude to start tracking it.
 
-Short `gar.mn` links must be expanded to the full
-`https://livetrack.garmin.com/session/<id>/token/<token>` form before handing them to the server
-(open the short link in a browser and copy the address). The server deliberately accepts only
-that exact host and path shape.
+Both link forms work: the full `https://livetrack.garmin.com/session/<id>/token/<token>` URL and
+the short `https://gar.mn/<code>` link the Garmin app shares. The server expands short links
+itself, following the redirect one hop at a time and accepting only `https` targets on `gar.mn` or
+`livetrack.garmin.com`; the expanded URL must still match the exact host and path shape above.
 
 ## Tool reference
 
@@ -98,7 +98,7 @@ reason, never invented.
 
 | Tool | Returns | When Claude should call it |
 |---|---|---|
-| `start_tracking(livetrack_url, label?)` | `session_id`, status, first-ingest result | Once, when you give it a LiveTrack URL |
+| `start_tracking(livetrack_url, label?)` | `session_id`, status, first-ingest result | Once, when you give it a LiveTrack URL (full or `gar.mn`) |
 | `list_sessions()` | id, label, status, started, last data age, ingest errors | To find a session or check what is tracked |
 | `get_live_status(session_id?)` | elapsed / moving time, distance, current (rolling) and average pace, current/avg HR, cadence, elevation gain/loss, `data_freshness_seconds`, `stale`, ingest health | "How is it going right now?" |
 | `get_splits(session_id?, split_distance_m=1000)` | per-split time, pace, avg HR, elevation +/- (boundaries interpolated) | Kilometre comparisons, fade detection |

@@ -1,8 +1,13 @@
 """Strict validation of LiveTrack share URLs (SSRF guard).
 
-Only `https://livetrack.garmin.com/session/<uuid>/token/<token>` is accepted. Anything else —
+Only `https://livetrack.garmin.com/session/<uuid>/token/<token>` is accepted here. Anything else —
 other hosts, http, IP literals, userinfo tricks, ports, odd paths — is rejected. Redirects are
 never followed by the fetcher, so a URL that redirects elsewhere cannot escape this check either.
+
+Garmin short links (`https://gar.mn/<code>`) are deliberately rejected by `parse_share_url`:
+`TrackingService.start_tracking` expands them first with `livetrack.shortlink.expand_short_url`
+and then runs the expanded URL through this validator, which stays the single authority on the
+final shape.
 """
 
 from __future__ import annotations
@@ -52,8 +57,8 @@ def parse_share_url(url: str) -> ShareUrl:
         raise InvalidLiveTrackUrlError("The LiveTrack URL must not specify a port.")
     if parts.hostname != LIVETRACK_HOST or parts.netloc != LIVETRACK_HOST:
         raise InvalidLiveTrackUrlError(
-            f"The host must be exactly {LIVETRACK_HOST}. "
-            "Short links (gar.mn) must be expanded first."
+            f"The host must be exactly {LIVETRACK_HOST} "
+            "(or a https://gar.mn/<code> short link, which start_tracking expands for you)."
         )
     match = _PATH_RE.match(parts.path)
     if match is None:

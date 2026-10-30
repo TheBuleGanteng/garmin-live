@@ -21,9 +21,27 @@ VM. Garmin does not block the datacenter IP. Playwright therefore stays a dev-on
 
 - Long form: `https://livetrack.garmin.com/session/<sessionId>/token/<token>`
   `<sessionId>` is a UUID; `<token>` is an opaque ~29-character alphanumeric string.
-- Short form: `https://gar.mn/<code>` → `301` to the long form. The app accepts only the long
-  form (host exactly `livetrack.garmin.com`, path `/session/<uuid>/token/<token>`); the short form
-  must be expanded by the user or by a dedicated resolver that re-validates the final URL.
+- Short form: `https://gar.mn/<code>` → `301` to the long form. `parse_share_url` accepts only
+  the long form (host exactly `livetrack.garmin.com`, path `/session/<uuid>/token/<token>`);
+  `start_tracking` expands the short form server-side first (see "Short links" below) and then
+  re-validates the result with `parse_share_url`.
+
+## Short links
+
+Measured on a real share link from the Garmin app, with redirects disabled and each hop requested
+separately (hosts and status codes only; the code and token are placeholders):
+
+| Hop | Request | Response |
+|---|---|---|
+| 1 | `GET https://gar.mn/<code>` | `301`, `Location: https://livetrack.garmin.com/session/<sessionId>/token/<token>` |
+| 2 | *(not fetched)* `https://livetrack.garmin.com/session/<sessionId>/token/<token>` | passes `parse_share_url` |
+
+Pattern: **one hop**, `https://gar.mn` → `https://livetrack.garmin.com`. No other host appears in
+the chain and the target is already https. The expander (`livetrack/shortlink.py`) therefore
+allowlists exactly `gar.mn` and `livetrack.garmin.com` as redirect targets, allows at most 3 hops
+for headroom, requires https and no userinfo/port on every hop, reads no bodies, and returns the
+first `livetrack.garmin.com` URL without fetching it. `<code>` was 9 alphanumeric characters; the
+validator accepts 4–32.
 
 ## Data endpoints and their roles
 

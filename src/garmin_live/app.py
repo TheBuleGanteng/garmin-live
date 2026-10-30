@@ -104,6 +104,7 @@ def create_app(
                     with contextlib.suppress(asyncio.CancelledError):
                         await task
                 await components.poller.stop()
+                await components.service.aclose()
                 components.db.close()
 
     app = FastAPI(

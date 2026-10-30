@@ -11,8 +11,11 @@ import logging
 from collections.abc import Callable
 from datetime import UTC, datetime
 
+import httpx
+
 from garmin_live.ingest.poller import Poller
 from garmin_live.livetrack.models import Trackpoint
+from garmin_live.livetrack.shortlink import DEFAULT_TIMEOUT_S, expand_short_url, is_short_link
 from garmin_live.livetrack.urls import LIVETRACK_API_BASE, InvalidLiveTrackUrlError, parse_share_url
 from garmin_live.metrics.splits import compute_splits
 from garmin_live.metrics.summary import live_status, session_summary
@@ -23,6 +26,7 @@ from garmin_live.store.repo import Repo, SessionRow
 log = logging.getLogger(__name__)
 
 MAX_LABEL_LEN = 60
+SHORT_LINK_EXPAND_FAILED = "Couldn't expand the short link; try the full LiveTrack URL."
 Clock = Callable[[], datetime]
 
 
@@ -32,21 +36,42 @@ class ServiceError(ValueError):
 
 class TrackingService:
     def __init__(
-        self, repo: Repo, poller: Poller, *, athlete_max_hr: int | None, clock: Clock | None = None
+        self,
+        repo: Repo,
+        poller: Poller,
+        *,
+        athlete_max_hr: int | None,
+        clock: Clock | None = None,
+        http_client: httpx.AsyncClient | None = None,
     ) -> None:
         self._repo = repo
         self._poller = poller
         self._max_hr = athlete_max_hr
         self._clock = clock or (lambda: datetime.now(UTC))
+        # Used only to expand gar.mn short links; injected by tests so they never touch the network.
+        self._http = http_client or httpx.AsyncClient(
+            timeout=DEFAULT_TIMEOUT_S, follow_redirects=False
+        )
+
+    async def aclose(self) -> None:
+        """Release the short-link HTTP client (called from the app's shutdown)."""
+        await self._http.aclose()
 
     # ---- session lifecycle --------------------------------------------------------------
     async def start_tracking(
         self, livetrack_url: str, label: str | None = None
     ) -> dict[str, object]:
+        """Accepts the full share URL or a `https://gar.mn/<code>` short link (expanded here)."""
         try:
-            share = parse_share_url(livetrack_url)
+            url = livetrack_url
+            if is_short_link(url):
+                url = await expand_short_url(url, self._http)
+            share = parse_share_url(url)
         except InvalidLiveTrackUrlError as exc:
             raise ServiceError(str(exc)) from None
+        except httpx.HTTPError:
+            # Transport-level failure (DNS, TLS, timeout). Never include the URL.
+            raise ServiceError(SHORT_LINK_EXPAND_FAILED) from None
         return await self._start(share.session_id, share.token, LIVETRACK_API_BASE, label)
 
     async def start_tracking_internal(

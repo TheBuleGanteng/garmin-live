@@ -25,15 +25,16 @@ def register_tools(server: MCPServer, service: TrackingService) -> None:
         name="start_tracking",
         description=(
             "Start following a Garmin LiveTrack share link so its live data can be queried. "
-            "Call this once when the athlete gives you a LiveTrack URL of the form "
-            "https://livetrack.garmin.com/session/<id>/token/<token> (short gar.mn links must be "
-            "expanded first). Returns the new session_id, its status and the first-ingest result. "
+            "Call this once when the athlete gives you a LiveTrack URL. Both forms are accepted: "
+            "the full https://livetrack.garmin.com/session/<id>/token/<token> URL and the short "
+            "https://gar.mn/<code> link Garmin shares (expanded server-side). Returns the new "
+            "session_id, its status and the first-ingest result. "
             "Only one server-side session is needed per workout; calling it again for the same "
             "link returns the existing session."
         ),
     )
     async def start_tracking(livetrack_url: str, label: str | None = None) -> dict[str, Any]:
-        """livetrack_url: full LiveTrack share URL. label: optional short name for the session."""
+        """livetrack_url: share URL (full or gar.mn short link). label: optional session name."""
         try:
             return await service.start_tracking(livetrack_url, label)
         except ServiceError as exc:

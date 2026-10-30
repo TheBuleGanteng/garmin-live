@@ -14,13 +14,19 @@ from mcp import Client
 
 from garmin_live.events.bus import EventBus
 from garmin_live.events.notifier import NoopNotifier
-from garmin_live.ingest.poller import Poller
+from garmin_live.ingest.poller import Poller, default_fetcher_factory
+from garmin_live.livetrack.urls import LIVETRACK_API_BASE
 from garmin_live.mcp_server.server import build_mcp_server
 from garmin_live.replay.server import ReplayConfig, ReplayServer, load_fixture
-from garmin_live.service import ServiceError, TrackingService
+from garmin_live.service import SHORT_LINK_EXPAND_FAILED, ServiceError, TrackingService
 from garmin_live.store import repo as st
-from garmin_live.store.repo import Repo
-from tests.conftest import wait_until
+from garmin_live.store.repo import Repo, SessionRow
+from tests.conftest import FakeFetcher, make_point, wait_until
+
+SID = "0f0f0f0f-aaaa-4bbb-8ccc-dddddddd0000"
+TOK = "FAKETOKENnotreal0000ABCDEFGHI"
+LONG = f"https://livetrack.garmin.com/session/{SID}/token/{TOK}"
+SHORT = "https://gar.mn/abcDEF12"
 
 
 @pytest.fixture
@@ -42,13 +48,43 @@ async def _advance(server: ReplayServer, seconds: float) -> None:
 
 
 def _service(
-    repo: Repo, notifier: NoopNotifier, **poller_kw: Any
+    repo: Repo,
+    notifier: NoopNotifier,
+    http_client: httpx.AsyncClient | None = None,
+    **poller_kw: Any,
 ) -> tuple[TrackingService, Poller]:
     poller = Poller(
         repo, EventBus(repo, notifier), poll_min_seconds=0.2, max_session_hours=12, **poller_kw
     )
     poller.session_check_s = 0.4
-    return TrackingService(repo, poller, athlete_max_hr=185), poller
+    return TrackingService(repo, poller, athlete_max_hr=185, http_client=http_client), poller
+
+
+def _shortlink_client(
+    routes: dict[str, tuple[int, dict[str, str]]], *, fail: bool = False
+) -> httpx.AsyncClient:
+    """Mock gar.mn: `routes` maps request URL → (status, headers); `fail` raises a transport error.
+    Anything unmapped answers 404 so the test never reaches the network."""
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if fail:
+            raise httpx.ConnectError("offline", request=request)
+        status, headers = routes.get(str(request.url), (404, {}))
+        return httpx.Response(status, headers=headers, request=request)
+
+    return httpx.AsyncClient(transport=httpx.MockTransport(handler), follow_redirects=False)
+
+
+def _fake_for_real_host_factory(fake: FakeFetcher):  # type: ignore[no-untyped-def]
+    """Sessions on the real LiveTrack host get `fake` (no network); replay sessions keep the
+    real HttpFetcher so the rest of the test is unchanged."""
+
+    def factory(session: SessionRow):  # type: ignore[no-untyped-def]
+        if session.api_base == LIVETRACK_API_BASE:
+            return fake
+        return default_fetcher_factory(session)
+
+    return factory
 
 
 async def test_replay_requires_the_csrf_pair_and_mirrors_paths(replay: ReplayServer) -> None:
@@ -203,10 +239,66 @@ async def test_service_validation_and_limits(repo: Repo, notifier: NoopNotifier)
     await poller.stop()
 
 
+async def test_start_tracking_expands_short_links(repo: Repo, notifier: NoopNotifier) -> None:
+    fake = FakeFetcher(batches=[[make_point(0, 0.0), make_point(10, 30.0)]])
+    routes = {
+        SHORT: (301, {"location": LONG}),
+        "https://gar.mn/badPATH1": (301, {"location": f"https://livetrack.garmin.com/x/{SID}"}),
+        "https://gar.mn/otherHST": (301, {"location": LONG.replace("garmin.com", "evil.example")}),
+        "https://gar.mn/noRedir1": (200, {}),
+    }
+    service, poller = _service(
+        repo,
+        notifier,
+        _shortlink_client(routes),
+        fetcher_factory=_fake_for_real_host_factory(fake),
+    )
+    # rejected: expansion lands outside the policy or on an invalid share URL
+    with pytest.raises(ServiceError, match=r"/session/<id>/token/<token>"):
+        await service.start_tracking("https://gar.mn/badPATH1")
+    with pytest.raises(ServiceError, match=r"did not lead to livetrack\.garmin\.com"):
+        await service.start_tracking("https://gar.mn/otherHST")
+    with pytest.raises(ServiceError, match="did not redirect"):
+        await service.start_tracking("https://gar.mn/noRedir1")
+    with pytest.raises(ServiceError, match=r"gar\.mn short link"):
+        await service.start_tracking("https://gar.mn/abc/def")
+    assert repo.list_sessions() == []
+    # accepted: expands to LONG, which parse_share_url accepts; tracked on the real host base
+    started = await service.start_tracking(SHORT, label="via short link")
+    assert started["status"] == st.ACTIVE and started["label"] == "via short link"
+    row = repo.find_by_garmin_id(SID)
+    assert row is not None and row.token == TOK and row.api_base == LIVETRACK_API_BASE
+    assert await wait_until(lambda: repo.count_trackpoints(row.id) >= 2, timeout=5)
+    # idempotent: the same short link maps to the same session
+    again = await service.start_tracking(SHORT)
+    assert again["session_id"] == started["session_id"] and "already tracking" in str(again["note"])
+    await poller.stop()
+    await service.aclose()
+
+
+async def test_start_tracking_wraps_short_link_transport_errors(
+    repo: Repo, notifier: NoopNotifier
+) -> None:
+    service, poller = _service(repo, notifier, _shortlink_client({}, fail=True))
+    with pytest.raises(ServiceError) as exc:
+        await service.start_tracking(SHORT)
+    assert str(exc.value) == SHORT_LINK_EXPAND_FAILED and "gar.mn" not in str(exc.value)
+    assert repo.list_sessions() == []
+    await poller.stop()
+    await service.aclose()
+
+
 async def test_mcp_tools_in_process(
     repo: Repo, notifier: NoopNotifier, replay: ReplayServer
 ) -> None:
-    service, poller = _service(repo, notifier)
+    # gar.mn is mocked: SHORT 404s (not a redirect) and only a *different* code redirects properly
+    fake = FakeFetcher(batches=[[make_point(0, 0.0), make_point(10, 30.0)]])
+    service, poller = _service(
+        repo,
+        notifier,
+        _shortlink_client({"https://gar.mn/goodCODE": (301, {"location": LONG})}),
+        fetcher_factory=_fake_for_real_host_factory(fake),
+    )
     server = build_mcp_server(service)
     fx = replay.fixture
     async with Client(server) as client:
@@ -226,8 +318,9 @@ async def test_mcp_tools_in_process(
         )
         assert client.instructions and "session_id is optional" in client.instructions
 
-        bad = await client.call_tool("start_tracking", {"livetrack_url": "https://gar.mn/abcdefgh"})
-        assert bad.is_error and "expanded" in bad.content[0].text  # type: ignore[union-attr]
+        # a gar.mn link whose expansion does not yield a LiveTrack URL is rejected...
+        bad = await client.call_tool("start_tracking", {"livetrack_url": SHORT})
+        assert bad.is_error and "short link" in bad.content[0].text  # type: ignore[union-attr]
 
         empty = await client.call_tool("get_live_status", {})
         assert empty.is_error and "No sessions yet" in empty.content[0].text  # type: ignore[union-attr]
@@ -271,5 +364,18 @@ async def test_mcp_tools_in_process(
         assert stopped.structured_content["status"] == st.STOPPED  # type: ignore[index]
         unknown = await client.call_tool("stop_tracking", {"session_id": "s_nope"})
         assert unknown.is_error
+
+        # a gar.mn link that expands to a valid share URL is accepted by the tool and tracked
+        good = await client.call_tool(
+            "start_tracking", {"livetrack_url": "https://gar.mn/goodCODE", "label": "short"}
+        )
+        assert not good.is_error
+        gsc = good.structured_content
+        assert gsc is not None and gsc["label"] == "short" and gsc["status"] == st.ACTIVE
+        expanded = repo.find_by_garmin_id(SID)
+        assert expanded is not None and expanded.token == TOK
+        assert expanded.api_base == LIVETRACK_API_BASE
+        stopped_short = await client.call_tool("stop_tracking", {"session_id": gsc["session_id"]})
+        assert stopped_short.structured_content["status"] == st.STOPPED  # type: ignore[index]
     await poller.stop()
     await asyncio.sleep(0)

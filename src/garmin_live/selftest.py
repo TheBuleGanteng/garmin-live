@@ -81,6 +81,7 @@ async def run_selftest() -> dict[str, object]:
         report["ok"] = all(checks.values())
     finally:
         await components.poller.stop()
+        await components.service.aclose()
         components.db.close()
         await replay.stop()
     return report
