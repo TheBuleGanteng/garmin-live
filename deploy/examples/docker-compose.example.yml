@@ -1,0 +1,44 @@
+# Standalone self-host example: garmin-live + Caddy (automatic HTTPS) serving at the root of
+# your own domain. Copy this file and Caddyfile.example next to a `.env` (see .env.example):
+#
+#   cp deploy/examples/docker-compose.example.yml docker-compose.yml
+#   cp deploy/examples/Caddyfile.example Caddyfile
+#   cp .env.example .env            # then edit: MCP_PATH_SECRET, MCP_ALLOWED_HOSTS, ATHLETE_MAX_HR
+#   DOMAIN=example.com docker compose up -d
+#
+# Your MCP endpoint is then https://example.com/mcp/<MCP_PATH_SECRET>.
+services:
+  garmin-live:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: garmin-live:latest
+    env_file: .env
+    environment:
+      # Served at the root behind Caddy; override in .env only if you also change the Caddyfile.
+      BASE_PATH: ""
+    volumes:
+      - garmin-live-data:/data
+    restart: unless-stopped
+    mem_limit: 256m
+    # No published ports: only Caddy talks to the app.
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN to your public hostname, e.g. example.com}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      - garmin-live
+
+volumes:
+  garmin-live-data:
+  caddy-data:
+  caddy-config:

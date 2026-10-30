@@ -1,0 +1,23 @@
+# Caddy reverse proxy for garmin-live at the root of {$DOMAIN}. TLS certificates are obtained
+# and renewed automatically. Streaming-friendly: no buffering, long timeouts for SSE.
+{$DOMAIN} {
+    encode zstd gzip
+
+    reverse_proxy garmin-live:8000 {
+        header_up Host {host}
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+        flush_interval -1
+        transport http {
+            read_timeout 3600s
+            write_timeout 3600s
+        }
+    }
+
+    log {
+        output stdout
+        format console
+        # Do not log request URIs: the MCP path contains the secret.
+        level WARN
+    }
+}

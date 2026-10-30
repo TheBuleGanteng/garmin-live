@@ -102,9 +102,12 @@ While the activity is live, the session body has `end` = `start` + 24 h (a place
 - `end` is rewritten to the actual end time (observed: last trackpoint `dateTime` + 45 s), and
 - `activeMultiDayActivities` disappears from the body.
 
-The page observed this on its next 120 s session poll. The poller therefore treats
-**`end <= now`** as the end-of-session signal (robust to the key disappearing), emits
-`session_ended`, and stops polling. `viewable` stayed `true` throughout.
+The page observed this on its next 120 s session poll. Between polls, `start` and `end` also
+jitter by about 1 ms, so a naive "end changed" check would misfire. The poller therefore treats
+either of these as the end-of-session signal: `end` moved **earlier by more than a minute** than
+the value seen on a previous poll, or `end <= now` (applied only when the session's own
+timeline is current, so replayed fixtures are not ended by the wall clock). It then emits
+`session_ended` and stops polling. `viewable` stayed `true` throughout.
 
 After the end, the track-points endpoint kept returning the complete list (with `begin`, an empty
 list) and the session endpoint kept returning the ended body, for at least the 30-minute post-end

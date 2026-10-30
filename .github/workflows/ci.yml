@@ -1,0 +1,76 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: lint, types, tests, portability
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history for gitleaks
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.9.2"
+
+      - name: Install
+        run: |
+          uv venv --python 3.12 .venv
+          uv pip install --python .venv/bin/python -e '.[dev]'
+
+      - name: ruff
+        run: |
+          .venv/bin/ruff check .
+          .venv/bin/ruff format --check .
+
+      - name: mypy --strict
+        run: .venv/bin/mypy --strict src/
+
+      - name: pytest (unit + integration, coverage >= 85%)
+        env:
+          # Only used by the selftest/app tests; an obviously fake value.
+          MCP_PATH_SECRET: test-secret-not-real-0000-abcdefghijklmnop
+        run: .venv/bin/python -m pytest tests/unit tests/integration -q --cov=src/garmin_live
+
+      - name: portability grep (no deployment-specific strings)
+        run: |
+          if grep -r -i -I -E --exclude-dir=__pycache__ 'kebayoran|thebuleganteng|/home/' src tests docker deploy .env.example; then
+            echo "deployment-specific strings found"; exit 1
+          fi
+          echo "portability grep clean"
+
+      - name: self-host compose example validates
+        run: |
+          tmp=$(mktemp -d)
+          cp deploy/examples/docker-compose.example.yml "$tmp/docker-compose.yml"
+          cp deploy/examples/Caddyfile.example "$tmp/Caddyfile"
+          cp .env.example "$tmp/.env"
+          mkdir -p "$tmp/docker" && cp docker/Dockerfile "$tmp/docker/Dockerfile"
+          (cd "$tmp" && DOMAIN=example.com docker compose config >/dev/null)
+          echo "compose example ok"
+
+  gitleaks:
+    name: gitleaks (full history)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: gitleaks
+        run: |
+          docker run --rm -v "$PWD:/repo" -w /repo zricethezav/gitleaks:v8.21.2 \
+            git --redact --no-banner --config /repo/.gitleaks.toml /repo
+
+# The Docker end-to-end suite (tests/e2e) needs the local compose stack and is run locally only;
+# see README "Development".
