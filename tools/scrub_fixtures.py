@@ -51,6 +51,16 @@ FAKE_START = datetime(2020, 1, 1, 6, 0, 0, tzinfo=UTC)
 FAKE_ORIGIN_LAT = -33.0
 FAKE_ORIGIN_LON = -40.0
 FAKE_FIRST_ALTITUDE_M = 100.0
+FAKE_GUID = "11111111-1111-4111-8111-111111111111"
+FAKE_IDENTIFIER = "22222222-2222-4222-8222-222222222222"
+FAKE_PROFILE_ID = 10000001
+FAKE_UNIT_ID = 1000000001
+FAKE_CSRF = "FAKE-CSRF-TOKEN-0000"
+FAKE_SESSION_NAME = "Jan 01, 2020"
+# Only LiveTrack API responses belong in a fixture; telemetry beacons, analytics, map tiles and
+# Cloudflare worker responses are dropped entirely (they carry viewer-identifying data).
+KEEP_HOST = "livetrack.garmin.com"
+KEEP_PATH_PREFIX = "/api/"
 EARTH_RADIUS_M = 6_371_008.8
 GEOM_SEED = 20200101
 HR_SEED = 20200102
@@ -66,6 +76,7 @@ TIME_KEY_RE = re.compile(
 )
 ID_KEY_RE = re.compile(
     r"(session.?id|user.?id|profile.?id|customer.?id|device.?id|unit.?id|serial|garmin.?guid|"
+    r"request.?id|^identifier$|session.?name|"
     r"display.?name|first.?name|last.?name|full.?name|user.?name|nick.?name|^name$|email|avatar|image.?url|"
     r"profile.?image|user.?pro|owner|publisher)",
     re.IGNORECASE,
@@ -73,6 +84,10 @@ ID_KEY_RE = re.compile(
 ISO_DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 ISO_DT_RE = re.compile(
     r"^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}:\d{2})(\.\d{1,6})?(Z|[+-]\d{2}:?\d{2})?$"
+)
+# Also matches URL-encoded colons (%3A) so timestamps inside query strings are shifted too.
+ISO_DT_INLINE_RE = re.compile(
+    r"\d{4}-\d{2}-\d{2}T\d{2}(?::|%3A)\d{2}(?::|%3A)\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}(?::|%3A)?\d{2})?"
 )
 EMAIL_RE = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
 EPOCH_MS_MIN, EPOCH_MS_MAX = 1_000_000_000_000, 4_000_000_000_000
@@ -85,7 +100,10 @@ KEEP_REQUEST_HEADERS = {
     "user-agent",
     "referer",
     "origin",
+    "livetrack-csrf-token",
+    "x-garmin-livetrack-user-guid",
 }
+MASKED_HEADERS = {"livetrack-csrf-token": FAKE_CSRF}
 
 
 # --------------------------------------------------------------------------- geometry
@@ -179,6 +197,7 @@ class Scrubber:
     time_delta: timedelta = timedelta(0)
     alt_offset: float = 0.0
     hr_map: dict[str, int] = field(default_factory=dict)
+    id_map: dict[str, str] = field(default_factory=dict)
     _ordered_points: list[tuple[float, float, float | None]] = field(default_factory=list)
     _seen_points: set[tuple[float, float]] = field(default_factory=set)
     _earliest: datetime | None = None
@@ -199,6 +218,8 @@ class Scrubber:
                 self.stats.original_coords.add(_coord_sig(lon))
             for k, v in node.items():
                 child = f"{path}.{k}"
+                if ID_KEY_RE.search(k) and isinstance(v, str | int) and not isinstance(v, bool):
+                    self._register_id(k, v)
                 if isinstance(v, str):
                     dt = parse_iso(v) if TIME_KEY_RE.search(k) or ISO_DT_RE.match(v) else None
                     if dt is not None:
@@ -226,6 +247,30 @@ class Scrubber:
         elif isinstance(node, list):
             for i, v in enumerate(node):
                 self.discover(v, f"{path}[{i}]")
+
+    def _register_id(self, key: str, value: str | int) -> None:
+        """Map a real identity value to a fixed fake so bodies, URLs and headers stay consistent."""
+        text = str(value)
+        if len(text) < 6 or text in self.id_map or text in (self.session_id, self.token):
+            return
+        k = key.lower()
+        if "guid" in k:
+            fake = FAKE_GUID
+        elif k == "identifier":
+            fake = FAKE_IDENTIFIER
+        elif "profile" in k and isinstance(value, int):
+            fake = str(FAKE_PROFILE_ID)
+        elif ("unit" in k or "device" in k) and isinstance(value, int):
+            fake = str(FAKE_UNIT_ID)
+        elif "session" in k and "name" in k:
+            fake = FAKE_SESSION_NAME
+        elif "name" in k:
+            fake = "Fixture Athlete"
+        elif isinstance(value, int):
+            fake = str(FAKE_PROFILE_ID + len(self.id_map) + 1)
+        else:
+            fake = f"REDACTED-{len(self.id_map) + 1:02d}"
+        self.id_map[text] = fake
 
     def finalize_discovery(self) -> None:
         pts = self._ordered_points
@@ -283,6 +328,8 @@ class Scrubber:
         if isinstance(value, str):
             if ID_KEY_RE.search(key):
                 self.stats.counts["identity_strings_replaced"] += 1
+                if value in self.id_map or value in (self.session_id, self.token):
+                    return self.replace_ids(value)
                 return _fake_identity(key)
             return self._scrub_string(value, path)
         return self.scrub(value, path)
@@ -297,7 +344,8 @@ class Scrubber:
                 return round(fake[0] if key.lower() in LAT_KEYS else fake[1], 7)
         if ALT_KEY_RE.search(key) and self.alt_offset:
             self.stats.counts["altitudes_shifted"] += 1
-            return round(float(value) + self.alt_offset, 2)
+            shifted_alt = float(value) + self.alt_offset
+            return round(shifted_alt) if isinstance(value, int) else round(shifted_alt, 2)
         if HR_KEY_RE.search(key) and not self.keep_hr:
             self.stats.counts["hr_values_synthesized"] += 1
             return self.hr_map.get(path, 140)
@@ -306,8 +354,8 @@ class Scrubber:
             self.stats.counts["epoch_timestamps_shifted"] += 1
             return shifted
         if ID_KEY_RE.search(key):
-            self.stats.counts["numeric_ids_zeroed"] += 1
-            return 0
+            self.stats.counts["numeric_ids_replaced"] += 1
+            return int(self.id_map.get(str(value), "0"))
         return value
 
     def _scrub_string(self, value: str, path: str) -> str:
@@ -333,13 +381,32 @@ class Scrubber:
         return new
 
     def replace_ids(self, text: str) -> str:
+        """Rewrite identifiers and timestamps embedded in free text (URLs, headers, messages)."""
         if self.session_id:
             text = text.replace(self.session_id, FAKE_SESSION_ID)
         if self.token:
             text = text.replace(self.token, FAKE_TOKEN)
+        for real, fake in sorted(self.id_map.items(), key=lambda kv: -len(kv[0])):
+            text = text.replace(real, fake)
         for lit in self.extra_literals:
             text = text.replace(lit, "REDACTED")
+        text = ISO_DT_INLINE_RE.sub(self._shift_inline_dt, text)
+        for d in self.stats.original_dates:
+            if d in text:
+                shifted_day = datetime.fromisoformat(d).replace(tzinfo=UTC) + self.time_delta
+                text = text.replace(d, shifted_day.date().isoformat())
         return text
+
+    def _shift_inline_dt(self, m: re.Match[str]) -> str:
+        raw_text = m.group(0)
+        encoded = "%3A" in raw_text
+        plain = raw_text.replace("%3A", ":")
+        dt = parse_iso(plain)
+        if dt is None:
+            return raw_text
+        self.stats.counts["inline_timestamps_shifted"] += 1
+        shifted = format_like(plain, dt + self.time_delta)
+        return shifted.replace(":", "%3A") if encoded else shifted
 
 
 def _extract_latlon(node: dict[str, Any]) -> tuple[float, float] | None:
@@ -388,7 +455,10 @@ def _shift_epoch(v: float, delta: timedelta) -> float | None:
 
 
 def _coord_sig(x: float) -> str:
-    return f"{x:.4f}"
+    """A short prefix of the coordinate's decimal form; substring-checked against the output."""
+    text = repr(float(x))
+    head, _, frac = text.partition(".")
+    return f"{head}.{frac[:4]}"
 
 
 def _fake_identity(key: str) -> str:
@@ -429,7 +499,17 @@ def load_denylist(path: Path) -> list[str]:
 
 
 def scrub_headers(headers: dict[str, str], keep: set[str], scrubber: Scrubber) -> dict[str, str]:
-    return {k: scrubber.replace_ids(v) for k, v in headers.items() if k.lower() in keep}
+    out: dict[str, str] = {}
+    for k, v in headers.items():
+        lk = k.lower()
+        if lk in keep:
+            out[k] = MASKED_HEADERS.get(lk) or scrubber.replace_ids(v)
+    return out
+
+
+def is_fixture_response(rec: dict[str, Any]) -> bool:
+    parts = urlsplit(rec["request"]["url"])
+    return parts.hostname == KEEP_HOST and parts.path.startswith(KEEP_PATH_PREFIX)
 
 
 def self_check(out_dir: Path, scrubber: Scrubber, denylist: list[str]) -> list[str]:
@@ -449,9 +529,17 @@ def self_check(out_dir: Path, scrubber: Scrubber, denylist: list[str]) -> list[s
         if sig in blob:
             problems.append("an original coordinate value survives in output")
             break
+    textual_formats = ("%b %d, %Y", "%B %d, %Y", "%d %b %Y", "%Y/%m/%d", "%m/%d/%Y", "%d.%m.%Y")
     for d in scrubber.stats.original_dates:
-        if d in blob and d not in ("2020-01-01",):
+        if d == "2020-01-01":
+            continue
+        day = datetime.fromisoformat(d)
+        if d in blob or any(day.strftime(f) in blob for f in textual_formats):
             problems.append("an original date survives in output")
+            break
+    for real in scrubber.id_map:
+        if real in blob:
+            problems.append("an original identity value (guid/profile/unit id) survives in output")
             break
     if EMAIL_RE.search(blob.replace("user@example.com", "")):
         problems.append("an email address survives in output")
@@ -492,7 +580,7 @@ def write_report(
     ]
     seen_shapes: set[str] = set()
     for path, val in st.remaining_strings.items():
-        shape = re.sub(r"\[\d+\]", "[*]", path)
+        shape = re.sub(r"\[\d+\]", "[*]", re.sub(r"^\$r\d+", "$", path))
         if shape in seen_shapes:
             continue
         seen_shapes.add(shape)
@@ -521,8 +609,13 @@ def run(name: str, raw_root: Path, out_root: Path, keep_hr: bool, denylist_path:
         session_id=session_id, token=token, keep_hr=keep_hr, extra_literals=denylist
     )
 
-    records = [json.loads(p.read_text()) for p in sorted(responses_dir.glob("*.json"))]
-    records.sort(key=lambda r: r["seq"])
+    all_records = [json.loads(p.read_text()) for p in sorted(responses_dir.glob("*.json"))]
+    records = sorted((r for r in all_records if is_fixture_response(r)), key=lambda r: r["seq"])
+    scrubber.stats.counts["responses_dropped_non_livetrack_api"] = len(all_records) - len(records)
+    scrubber.stats.notes.append(
+        f"only {KEEP_HOST}{KEEP_PATH_PREFIX}* responses are kept; telemetry, analytics, map and "
+        "geolocation responses are dropped"
+    )
 
     # pass 1: discover coordinates, times, altitude, HR sample positions
     for rec in records:
