@@ -46,3 +46,6 @@ htmlcov/
 # Playwright
 playwright-report/
 test-results/
+
+# Maintainer's AI runbooks (kept on disk, not published)
+ai-instructions/

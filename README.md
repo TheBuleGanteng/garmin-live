@@ -185,11 +185,6 @@ is forever.
 gitleaks (Docker) and `tools/check_denylist.sh` on every commit. CI runs gitleaks over the full
 history.
 
-## About `ai-instructions/`
-
-That folder contains the maintainer's AI build/deploy runbooks (used with Claude Code). It is
-**not needed to self-host** and you can ignore it.
-
 ## License
 
 [MIT](LICENSE).
