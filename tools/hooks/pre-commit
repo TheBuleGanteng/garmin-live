@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# pre-commit hook for garmin-live: gitleaks (staged changes) + private denylist.
+# Enabled with:  git config core.hooksPath tools/hooks
+# Never bypass with --no-verify.
+set -euo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+GITLEAKS_IMAGE="${GITLEAKS_IMAGE:-zricethezav/gitleaks:v8.21.2}"
+
+echo "[pre-commit] denylist check (staged)"
+bash tools/check_denylist.sh staged
+
+echo "[pre-commit] gitleaks git --pre-commit --staged ($GITLEAKS_IMAGE)"
+if command -v docker >/dev/null 2>&1; then
+  docker run --rm -v "$REPO_ROOT:/repo" -w /repo "$GITLEAKS_IMAGE" \
+    git --pre-commit --staged --redact --no-banner --config /repo/.gitleaks.toml /repo
+elif command -v gitleaks >/dev/null 2>&1; then
+  gitleaks git --pre-commit --staged --redact --no-banner --config .gitleaks.toml .
+else
+  echo "[pre-commit] ERROR: neither docker nor gitleaks is available; refusing to commit." >&2
+  exit 1
+fi
+
+echo "[pre-commit] OK"

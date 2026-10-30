@@ -1,0 +1,48 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+build/
+dist/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+.secret-denylist
+
+# Private captures and data
+fixtures/raw/
+*.har
+*.db
+*.db-*
+*.sqlite*
+
+# Running log (never committed)
+CLAUDE_SUMMARY.md
+
+# Tooling caches
+coverage.xml
+.coverage
+.coverage.*
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.uv-cache/
+
+# Local editor / agent settings
+.claude/settings.local.json
+.idea/
+.vscode/
+*.swp
+
+# Playwright
+playwright-report/
+test-results/

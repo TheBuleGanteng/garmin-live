@@ -1,0 +1,115 @@
+[build-system]
+requires = ["hatchling==1.27.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "garmin-live"
+version = "0.1.0"
+description = "Read-only bridge from a Garmin LiveTrack share link to Claude, exposed as a remote MCP server."
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.12,<3.13"
+authors = [{ name = "TheBuleGanteng" }]
+keywords = ["garmin", "livetrack", "mcp", "claude", "running"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Framework :: FastAPI",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Internet :: WWW/HTTP",
+]
+dependencies = [
+  "mcp==2.3.0",
+  "fastapi==0.162.0",
+  "starlette==1.10.0",
+  "uvicorn[standard]==0.54.0",
+  "httpx==0.28.1",
+  "pydantic==2.14.2",
+  "pydantic-settings==2.16.2",
+  "anyio==4.15.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "playwright==1.64.1",
+  "pytest==9.2.0",
+  "pytest-asyncio==1.4.1",
+  "pytest-cov==7.1.0",
+  "ruff==0.17.3",
+  "mypy==2.4.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/TheBuleGanteng/garmin-live"
+Issues = "https://github.com/TheBuleGanteng/garmin-live/issues"
+
+[project.scripts]
+garmin-live = "garmin_live.app:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/garmin_live"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests", "tools"]
+extend-exclude = ["fixtures", ".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "ASYNC", "S", "N", "RUF", "SIM", "PL"]
+ignore = [
+  "PLR0913",  # many arguments — tool signatures mirror the MCP spec
+  "PLR2004",  # magic numbers in metric math are documented inline
+  "S101",     # asserts are fine in tests; see per-file-ignores for src
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106", "PLR0915", "ASYNC"]
+"tools/**" = ["S603", "S607", "PLR0915", "PLR0912"]
+"src/garmin_live/replay/**" = ["S311", "S104"]
+
+[tool.ruff.format]
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+warn_unreachable = true
+mypy_path = "src"
+packages = ["garmin_live"]
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = ["playwright.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = "-ra --strict-markers"
+markers = [
+  "e2e: end-to-end tests that need the local docker stack (not run in CI)",
+]
+filterwarnings = ["error::DeprecationWarning:garmin_live.*"]
+
+[tool.coverage.run]
+source = ["src/garmin_live"]
+branch = true
+omit = [
+  "src/garmin_live/replay/*",
+  "src/garmin_live/fetch_browser.py",
+  "src/garmin_live/livetrack/fetch_browser.py",
+]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+skip_covered = false
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "if __name__ == .__main__.:",
+  "@overload",
+  "raise NotImplementedError",
+  "\\.\\.\\.",
+]
