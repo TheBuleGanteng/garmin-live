@@ -160,4 +160,7 @@ distances; neither depends on the synthetic path's total.
 
 ## Resource measurements
 
-Peak container memory for the `http` strategy is recorded here by Phase 6: _pending_.
+Peak container memory for the `http` strategy, sampled with `docker stats --no-stream` during
+the end-to-end replay session (72 points at 20x through nginx, MCP tools polled every 3 s):
+**74.4 MB** against the 200 MB limit for `http`. The compose `mem_limit` of 256 m leaves ample
+headroom; no browser is involved.

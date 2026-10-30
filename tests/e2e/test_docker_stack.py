@@ -2,7 +2,7 @@
 
 Local-only (needs Docker); skipped in CI. Run with:
 
-    MCP_PATH_SECRET=test-secret-not-real-0000-abcdefghijklmnop \
+    MCP_PATH_SECRET=test-secret-not-real-0000-abcdefghijklmnop \\
       .venv/bin/python -m pytest tests/e2e -m e2e -q
 
 Covers Phase 6 steps 4-8: health through nginx, the MCP smoke tool, wrong secret → 404, a full
@@ -33,7 +33,9 @@ SECRET = os.environ.get("MCP_PATH_SECRET", "test-secret-not-real-0000-abcdefghij
 PORT = os.environ.get("LOCAL_NGINX_PORT", "8080")
 BASE = f"http://localhost:{PORT}/garmin-mcp"
 MEMORY_LIMIT_MB = 200.0
-PEAK_FILE = ROOT / "fixtures" / "raw" / "e2e_peak_memory_mb.txt"
+RAW = ROOT / "fixtures" / "raw"
+PEAK_FILE = RAW / "e2e_peak_memory_mb.txt"
+OUTPUTS_FILE = RAW / "e2e_tool_outputs.json"
 
 pytestmark = pytest.mark.e2e
 
@@ -68,13 +70,11 @@ def _container_mem_mb(name_fragment: str = "garmin-live") -> float:
         if name_fragment in line and "replay" not in line and "nginx" not in line:
             usage = line.split()[1]  # e.g. 58.3MiB
             value = float(re.sub(r"[^0-9.]", "", usage))
-            return (
-                value / 1024
-                if usage.endswith("KiB")
-                else value * 1024
-                if usage.endswith("GiB")
-                else value
-            )
+            if usage.endswith("KiB"):
+                return value / 1024
+            if usage.endswith("GiB"):
+                return value * 1024
+            return value
     return 0.0
 
 
@@ -84,13 +84,13 @@ def stack() -> Iterator[dict[str, Any]]:
     assert build.returncode == 0, build.stderr[-2000:]
     up = _run([*COMPOSE, "up", "-d"], timeout=300)
     assert up.returncode == 0, up.stderr[-2000:]
+    RAW.mkdir(exist_ok=True)
     try:
         _wait_health(f"{BASE}/health")
         yield {"base": BASE, "mcp": f"{BASE}/mcp/{SECRET}"}
     finally:
         logs = _run([*COMPOSE, "logs", "--no-color"], timeout=120).stdout
-        (ROOT / "fixtures" / "raw").mkdir(exist_ok=True)
-        (ROOT / "fixtures" / "raw" / "e2e_logs.txt").write_text(logs)
+        (RAW / "e2e_logs.txt").write_text(logs)
         _run([*COMPOSE, "down", "-v"], timeout=300)
 
 
@@ -117,8 +117,9 @@ def test_mcp_smoke_tool_and_wrong_secret(stack: dict[str, Any]) -> None:
 
 
 async def test_full_tracking_session_via_mcp_tools(stack: dict[str, Any]) -> None:
-    """A real 20x session: the replay container serves the fixture, the app ingests it, and the
-    MCP tools (through nginx) report live status, splits, trend and the summary."""
+    """A real 20x session: the replay container serves the fixture, the app adopts the session
+    registered in its database, ingests it, and the MCP tools (through nginx) report live
+    status, splits, trend and the summary."""
     manifest = json.loads((ROOT / "fixtures/sessions/run1/manifest.json").read_text())
     # restart the replay so its rebased clock starts now, then register the session in the app DB
     assert _run([*COMPOSE, "restart", "replay"], timeout=120).returncode == 0
@@ -152,41 +153,37 @@ async def test_full_tracking_session_via_mcp_tools(stack: dict[str, Any]) -> Non
             if status.get("session_status") == "ended":
                 break
             time.sleep(3)
-        assert status.get("session_status") == "ended", status
-        assert status["points"] == 72 and status["distance_m"] == 1022
-        assert status["end_reason"] == "garmin_end"
-        assert not {"lat", "lon", "position"} & set(status)
         splits = (
-            await client.call_tool("get_splits", {"session_id": sid})
+            await client.call_tool("get_splits", {"session_id": sid, "split_distance_m": 500})
         ).structured_content or {}
-        assert len(splits["splits"]) == 2 and splits["splits"][0]["complete"] is True
         trend = (
             await client.call_tool(
                 "get_trend", {"session_id": sid, "metric": "pace", "window_minutes": 20}
             )
         ).structured_content or {}
-        assert trend["series"]
         summary = (
             await client.call_tool("get_session_summary", {"session_id": sid})
         ).structured_content or {}
-        assert summary["avg_pace_moving"] is not None and summary["hr_zones"] is not None
         listed = (await client.call_tool("list_sessions", {})).structured_content or {}
-        assert any(
-            s["label"] == "e2e-replay" and s["status"] == "ended" for s in listed["sessions"]
-        )
-        (ROOT / "fixtures" / "raw" / "e2e_tool_outputs.json").write_text(
-            json.dumps(
-                {
-                    "status": status,
-                    "splits": splits,
-                    "trend": trend,
-                    "summary": summary,
-                    "list": listed,
-                }
-            )
-        )
     peak = max(peak, _container_mem_mb())
     PEAK_FILE.write_text(f"{peak:.1f}\n")
+    # persist the outputs first so the privacy test can inspect them even if an assert fails
+    OUTPUTS_FILE.write_text(
+        json.dumps(
+            {"status": status, "splits": splits, "trend": trend, "summary": summary, "list": listed}
+        )
+    )
+    assert status.get("session_status") == "ended", status
+    assert status["points"] == 72 and status["distance_m"] == 1022
+    assert status["end_reason"] == "garmin_end"
+    assert not {"lat", "lon", "position"} & set(status)
+    # splits are measured from the first observed point (48 m into the fixture): the 974 m span
+    # gives one complete 500 m split plus a partial one
+    assert len(splits["splits"]) == 2
+    assert splits["splits"][0]["complete"] is True and splits["splits"][1]["complete"] is False
+    assert trend["series"]
+    assert summary["avg_pace_moving"] is not None and summary["hr_zones"] is not None
+    assert any(s["label"] == "e2e-replay" and s["status"] == "ended" for s in listed["sessions"])
     assert 0 < peak <= MEMORY_LIMIT_MB, f"peak container memory {peak:.1f} MB"
 
 
@@ -200,7 +197,7 @@ def test_selftest_inside_container(stack: dict[str, Any]) -> None:
 def test_privacy_of_logs_and_outputs(stack: dict[str, Any]) -> None:
     """No fixture coordinate values, no fake token/session id, no secret in logs or tool output."""
     logs = _run([*COMPOSE, "logs", "--no-color"], timeout=120).stdout
-    outputs = (ROOT / "fixtures" / "raw" / "e2e_tool_outputs.json").read_text()
+    outputs = OUTPUTS_FILE.read_text()
     manifest = json.loads((ROOT / "fixtures/sessions/run1/manifest.json").read_text())
     coords: set[str] = set()
     for rec_meta in manifest["responses"]:

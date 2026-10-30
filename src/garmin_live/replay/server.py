@@ -42,7 +42,14 @@ from starlette.routing import Route
 
 CSRF_COOKIE = "livetrack_csrf"
 CSRF_HEADER = "livetrack-csrf-token"
-FIXTURES_ROOT = Path(__file__).resolve().parents[3] / "fixtures" / "sessions"
+# Fixture roots, in order: the source checkout, the working directory (the container's WORKDIR
+# is /app, where the Dockerfile copies fixtures/sessions), and the conventional image path.
+FIXTURE_ROOTS = (
+    Path(__file__).resolve().parents[3] / "fixtures" / "sessions",
+    Path.cwd() / "fixtures" / "sessions",
+    Path("/app/fixtures/sessions"),
+)
+FIXTURES_ROOT = FIXTURE_ROOTS[0]
 END_AFTER_LAST_POINT_S = 45.0  # observed: Garmin sets end = last point + ~45 s
 
 
@@ -77,8 +84,17 @@ class Fixture:
         return _parse(self.session_ended["end"])
 
 
-def load_fixture(name: str, root: Path = FIXTURES_ROOT) -> Fixture:
-    folder = root / name
+def find_fixture_dir(name: str, root: Path | None = None) -> Path:
+    roots = (root,) if root is not None else FIXTURE_ROOTS
+    for candidate in roots:
+        if (candidate / name / "manifest.json").exists():
+            return candidate / name
+    searched = ", ".join(str(r) for r in roots)
+    raise FileNotFoundError(f"fixture {name!r} not found (searched: {searched})")
+
+
+def load_fixture(name: str, root: Path | None = None) -> Fixture:
+    folder = find_fixture_dir(name, root)
     manifest = json.loads((folder / "manifest.json").read_text())
     session_bodies: list[dict[str, Any]] = []
     points: dict[str, dict[str, Any]] = {}
@@ -333,9 +349,16 @@ def build_app(fixture: Fixture, config: ReplayConfig | None = None) -> Starlette
 class ReplayServer:
     """Runs the replay app on 127.0.0.1 with uvicorn inside the current event loop."""
 
-    def __init__(self, fixture: Fixture, config: ReplayConfig | None = None, port: int = 0) -> None:
+    def __init__(
+        self,
+        fixture: Fixture,
+        config: ReplayConfig | None = None,
+        port: int = 0,
+        host: str = "127.0.0.1",
+    ) -> None:
         self.fixture = fixture
         self.app = build_app(fixture, config)
+        self.host = host
         self._port = port
         self._server: Any = None
         self._task: Any = None
@@ -356,7 +379,7 @@ class ReplayServer:
                 self._port = s.getsockname()[1]
         self.port = self._port
         config = uvicorn.Config(
-            self.app, host="127.0.0.1", port=self._port, log_level="warning", lifespan="off"
+            self.app, host=self.host, port=self._port, log_level="warning", lifespan="off"
         )
         self._server = uvicorn.Server(config)
         self._task = asyncio.create_task(self._server.serve())
@@ -374,15 +397,21 @@ class ReplayServer:
 
 
 def main() -> None:
-    """`python -m garmin_live.replay.server [fixture] [port] [speed]` for manual testing."""
+    """`python -m garmin_live.replay.server [fixture] [port] [speed] [host]` for manual use.
+
+    `host` defaults to 127.0.0.1; the local docker stack passes 0.0.0.0 so other containers can
+    reach it. The share URL is printed with the token masked.
+    """
     name = sys.argv[1] if len(sys.argv) > 1 else "run1"
     port = int(sys.argv[2]) if len(sys.argv) > 2 else 8765
     speed = float(sys.argv[3]) if len(sys.argv) > 3 else 20.0
+    host = sys.argv[4] if len(sys.argv) > 4 else "127.0.0.1"
 
     async def run() -> None:
-        server = ReplayServer(load_fixture(name), ReplayConfig(speed=speed), port=port)
+        server = ReplayServer(load_fixture(name), ReplayConfig(speed=speed), port=port, host=host)
         await server.start()
-        print(f"replay serving fixture {name!r} at {server.share_url} (speed {speed}x)")
+        masked = server.share_url.rsplit("/token/", 1)[0] + "/token/<token>"
+        print(f"replay serving fixture {name!r} at {masked} (speed {speed}x)", flush=True)
         try:
             await asyncio.Event().wait()  # run until interrupted
         finally:

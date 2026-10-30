@@ -292,6 +292,14 @@ async def test_adopt_new_starts_tasks_for_sessions_created_elsewhere(
     poller = _poller(repo, fetcher, clock, notifier)
     assert poller.adopt_new() == 0
     s = _session(repo, clock)  # e.g. inserted by the admin CLI
+    # loopback-bound sessions belong to their creating process (selftest) and are skipped
+    repo.create_session(
+        label="selftest",
+        garmin_session_id="lo",
+        token="t",
+        api_base="http://127.0.0.1:9",
+        poll_interval_s=1,
+    )
     assert poller.adopt_new() == 1
     assert poller.adopt_new() == 0  # already running
     assert await wait_until(lambda: repo.count_trackpoints(s.id) == 1)

@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import ipaddress
 import logging
 import random
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from urllib.parse import urlsplit
 
 from garmin_live.events import bus as ev
 from garmin_live.events.bus import EventBus
@@ -40,6 +42,16 @@ FIRST_POLL_TIMEOUT_S = 10.0
 FetcherFactory = Callable[[SessionRow], Fetcher]
 Clock = Callable[[], datetime]
 Sleeper = Callable[[float], Awaitable[None]]
+
+
+def is_loopback_base(api_base: str) -> bool:
+    host = urlsplit(api_base).hostname or ""
+    if host in ("localhost", "::1"):
+        return True
+    try:
+        return ipaddress.ip_address(host).is_loopback
+    except ValueError:
+        return False
 
 
 def default_fetcher_factory(session: SessionRow) -> Fetcher:
@@ -106,9 +118,13 @@ class Poller:
         """Start tasks for active sessions in the store that have no running task.
 
         Covers sessions created out-of-process (the admin CLI) and tasks that died unexpectedly.
+        Sessions whose API base is a loopback address are owned by the process that created
+        them (the selftest's in-process replay) and are never adopted.
         """
         started = 0
         for session in self._repo.active_sessions():
+            if is_loopback_base(session.api_base):
+                continue
             if not self.is_running(session.id):
                 self.start_session(session)
                 started += 1
