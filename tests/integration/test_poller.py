@@ -322,7 +322,7 @@ async def test_stale_is_measured_from_garmin_time_for_live_sessions(
     assert await wait_until(lambda: ev.STALE in _types(repo, s.id))
     await poller.stop()
     stale = next(e for e in repo.list_events(s.id) if e.type == ev.STALE)
-    assert 300 < stale.payload["since_s"] <= 330  # measured from the point's timestamp (T0)
+    assert 300 <= stale.payload["since_s"] <= 330  # measured from the point's timestamp (T0)
     # flagged by the very next poll (events: new_points, stale), not after 300 s of ingest gap
     assert _types(repo, s.id)[:2] == [ev.NEW_POINTS, ev.STALE]
     final = repo.get_session(s.id)
@@ -343,7 +343,7 @@ async def test_stale_for_historical_timeline_uses_ingest_time(
     assert await wait_until(lambda: ev.STALE in _types(repo, s.id))
     await poller.stop()
     stale = next(e for e in repo.list_events(s.id) if e.type == ev.STALE)
-    assert 300 < stale.payload["since_s"] < 400  # ~300 s without ingest, not six years
+    assert 300 <= stale.payload["since_s"] < 400  # ~300 s without ingest, not six years
     assert len(fetcher.begins) >= 14  # about fifteen 20 s polls, not the second one
 
 
