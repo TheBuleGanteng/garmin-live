@@ -38,7 +38,12 @@
       "Bash(gh run view:*)",
       "Bash(git config core.hooksPath tools/hooks)",
       "Bash(tools/check_denylist.sh:*)",
-      "Bash(bash tools/check_denylist.sh:*)"
+      "Bash(bash tools/check_denylist.sh:*)",
+      "Bash(ssh -G kt-vm:*)",
+      "Bash(ssh -o BatchMode=yes -o ConnectTimeout=10 kt-vm true)",
+      "Bash(git config user.email)",
+      "Bash(awk:*)",
+      "Bash(touch:*)"
     ],
     "deny": [
       "Bash(sudo:*)",
