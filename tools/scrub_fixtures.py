@@ -199,6 +199,7 @@ class Scrubber:
     hr_map: dict[str, int] = field(default_factory=dict)
     id_map: dict[str, str] = field(default_factory=dict)
     _ordered_points: list[tuple[float, float, float | None]] = field(default_factory=list)
+    _array_points: set[tuple[float, float]] = field(default_factory=set)
     _seen_points: set[tuple[float, float]] = field(default_factory=set)
     _earliest: datetime | None = None
     _first_alt: float | None = None
@@ -214,6 +215,8 @@ class Scrubber:
                 if (lat, lon) not in self._seen_points:
                     self._seen_points.add((lat, lon))
                     self._ordered_points.append((lat, lon, ts))
+                if "[" in path:
+                    self._array_points.add((lat, lon))
                 self.stats.original_coords.add(_coord_sig(lat))
                 self.stats.original_coords.add(_coord_sig(lon))
             for k, v in node.items():
@@ -279,8 +282,26 @@ class Scrubber:
         dists = [haversine_m(a[0], a[1], b[0], b[1]) for a, b in pairwise(pts)]
         fake = synthetic_path(dists)
         self.coord_map = {(p[0], p[1]): f for p, f in zip(pts, fake, strict=False)}
+        fake_dists = [haversine_m(a[0], a[1], b[0], b[1]) for a, b in pairwise(fake)]
+        tp_only = [p for p in pts if (p[0], p[1]) in self._array_points]
+        tp_dists = [haversine_m(a[0], a[1], b[0], b[1]) for a, b in pairwise(tp_only)]
         self.stats.counts["coordinate_pairs_regenerated"] = len(self.coord_map)
-        self.stats.counts["path_total_distance_m"] = int(sum(dists))
+        self.stats.counts["coordinate_pairs_from_trackpoint_arrays"] = len(tp_only)
+        self.stats.counts["synthetic_path_total_m_all_pairs"] = round(sum(dists))
+        self.stats.counts["trackpoint_only_path_total_m"] = round(sum(tp_dists))
+        self.stats.notes.append(
+            "distance definitions: `synthetic_path_total_m_all_pairs` sums consecutive segments "
+            "over every coordinate pair found (time-ordered; includes standalone positions such "
+            "as the session-level `position`); `trackpoint_only_path_total_m` sums only "
+            "consecutive trackpoint-array points; Garmin's own totalDistanceMeters is a third "
+            "figure and is copied through unchanged"
+        )
+        if dists:
+            max_err = max(abs(a - b) for a, b in zip(dists, fake_dists, strict=True))
+            self.stats.notes.append(
+                "segment preservation check: max |real - synthetic| segment distance = "
+                f"{max_err:.3f} m over {len(dists)} segments"
+            )
         if self._earliest is not None:
             self.time_delta = FAKE_START - self._earliest
             self.stats.notes.append(

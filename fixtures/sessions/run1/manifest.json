@@ -1,0 +1,808 @@
+{
+ "name": "run1",
+ "fake_session_id": "00000000-0000-4000-8000-00000000f1x7",
+ "fake_token": "FAKETOKENFAKETOKENFAKETOKEN000",
+ "share_url": "https://livetrack.garmin.com/session/00000000-0000-4000-8000-00000000f1x7/token/FAKETOKENFAKETOKENFAKETOKEN000",
+ "responses": [
+  {
+   "file": "responses/0005.json",
+   "seq": 5,
+   "monotonic_s": 2.386,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/v2/sessions/00000000-0000-4000-8000-00000000f1x7?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0006.json",
+   "seq": 6,
+   "monotonic_s": 2.714,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/user/11111111-1111-4111-8111-111111111111/personal-url",
+   "status": 404
+  },
+  {
+   "file": "responses/0007.json",
+   "seq": 7,
+   "monotonic_s": 2.716,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/device/1000000001/capabilities?userProfileId=10000001",
+   "status": 200
+  },
+  {
+   "file": "responses/0012.json",
+   "seq": 12,
+   "monotonic_s": 17.633,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0013.json",
+   "seq": 13,
+   "monotonic_s": 33.449,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0014.json",
+   "seq": 14,
+   "monotonic_s": 48.787,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0015.json",
+   "seq": 15,
+   "monotonic_s": 64.114,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0016.json",
+   "seq": 16,
+   "monotonic_s": 79.479,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0017.json",
+   "seq": 17,
+   "monotonic_s": 94.786,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0018.json",
+   "seq": 18,
+   "monotonic_s": 110.119,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0019.json",
+   "seq": 19,
+   "monotonic_s": 122.644,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/v2/sessions/00000000-0000-4000-8000-00000000f1x7?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0020.json",
+   "seq": 20,
+   "monotonic_s": 125.457,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0021.json",
+   "seq": 21,
+   "monotonic_s": 140.845,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0022.json",
+   "seq": 22,
+   "monotonic_s": 156.154,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0023.json",
+   "seq": 23,
+   "monotonic_s": 171.522,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0024.json",
+   "seq": 24,
+   "monotonic_s": 186.856,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0025.json",
+   "seq": 25,
+   "monotonic_s": 202.201,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0026.json",
+   "seq": 26,
+   "monotonic_s": 217.535,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0027.json",
+   "seq": 27,
+   "monotonic_s": 232.88,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0028.json",
+   "seq": 28,
+   "monotonic_s": 243.038,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/v2/sessions/00000000-0000-4000-8000-00000000f1x7?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0029.json",
+   "seq": 29,
+   "monotonic_s": 248.248,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0030.json",
+   "seq": 30,
+   "monotonic_s": 263.608,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0031.json",
+   "seq": 31,
+   "monotonic_s": 278.92,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0032.json",
+   "seq": 32,
+   "monotonic_s": 294.402,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0033.json",
+   "seq": 33,
+   "monotonic_s": 309.653,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A06%3A26.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0034.json",
+   "seq": 34,
+   "monotonic_s": 324.945,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A06%3A26.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0035.json",
+   "seq": 35,
+   "monotonic_s": 340.268,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A06%3A56.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0036.json",
+   "seq": 36,
+   "monotonic_s": 355.57,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A07%3A16.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0037.json",
+   "seq": 37,
+   "monotonic_s": 363.483,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/v2/sessions/00000000-0000-4000-8000-00000000f1x7?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0038.json",
+   "seq": 38,
+   "monotonic_s": 370.918,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A07%3A16.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0039.json",
+   "seq": 39,
+   "monotonic_s": 386.215,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A07%3A46.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0040.json",
+   "seq": 40,
+   "monotonic_s": 401.564,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A07%3A46.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0041.json",
+   "seq": 41,
+   "monotonic_s": 416.914,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A08%3A16.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0042.json",
+   "seq": 42,
+   "monotonic_s": 432.262,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A08%3A16.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0043.json",
+   "seq": 43,
+   "monotonic_s": 447.581,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A08%3A36.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0044.json",
+   "seq": 44,
+   "monotonic_s": 462.897,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A08%3A56.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0045.json",
+   "seq": 45,
+   "monotonic_s": 478.303,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A08%3A56.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0046.json",
+   "seq": 46,
+   "monotonic_s": 483.933,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/v2/sessions/00000000-0000-4000-8000-00000000f1x7?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0047.json",
+   "seq": 47,
+   "monotonic_s": 493.521,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A08%3A56.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0048.json",
+   "seq": 48,
+   "monotonic_s": 508.88,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A08%3A56.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0049.json",
+   "seq": 49,
+   "monotonic_s": 524.218,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A10%3A06.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0050.json",
+   "seq": 50,
+   "monotonic_s": 539.516,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A10%3A26.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0051.json",
+   "seq": 51,
+   "monotonic_s": 554.827,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A10%3A36.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0052.json",
+   "seq": 52,
+   "monotonic_s": 570.219,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A10%3A57.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0053.json",
+   "seq": 53,
+   "monotonic_s": 585.494,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A11%3A07.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0054.json",
+   "seq": 54,
+   "monotonic_s": 600.831,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A11%3A07.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0055.json",
+   "seq": 55,
+   "monotonic_s": 604.391,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/v2/sessions/00000000-0000-4000-8000-00000000f1x7?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0056.json",
+   "seq": 56,
+   "monotonic_s": 616.159,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A11%3A27.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0057.json",
+   "seq": 57,
+   "monotonic_s": 631.47,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A11%3A27.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0058.json",
+   "seq": 58,
+   "monotonic_s": 646.856,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A11%3A27.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0059.json",
+   "seq": 59,
+   "monotonic_s": 662.198,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A12%3A17.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0060.json",
+   "seq": 60,
+   "monotonic_s": 677.532,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A12%3A38.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0061.json",
+   "seq": 61,
+   "monotonic_s": 692.863,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A12%3A58.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0062.json",
+   "seq": 62,
+   "monotonic_s": 708.214,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A13%3A08.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0063.json",
+   "seq": 63,
+   "monotonic_s": 723.609,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A13%3A28.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0064.json",
+   "seq": 64,
+   "monotonic_s": 724.802,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/v2/sessions/00000000-0000-4000-8000-00000000f1x7?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0065.json",
+   "seq": 65,
+   "monotonic_s": 738.919,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A13%3A38.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0066.json",
+   "seq": 66,
+   "monotonic_s": 754.234,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A13%3A58.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0067.json",
+   "seq": 67,
+   "monotonic_s": 769.729,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A13%3A58.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0068.json",
+   "seq": 68,
+   "monotonic_s": 785.049,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A14%3A28.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0069.json",
+   "seq": 69,
+   "monotonic_s": 800.425,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A14%3A28.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0070.json",
+   "seq": 70,
+   "monotonic_s": 815.781,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A14%3A58.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0071.json",
+   "seq": 71,
+   "monotonic_s": 831.141,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A15%3A18.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0072.json",
+   "seq": 72,
+   "monotonic_s": 845.262,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/v2/sessions/00000000-0000-4000-8000-00000000f1x7?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0073.json",
+   "seq": 73,
+   "monotonic_s": 846.524,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A15%3A18.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0074.json",
+   "seq": 74,
+   "monotonic_s": 861.876,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A15%3A18.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0075.json",
+   "seq": 75,
+   "monotonic_s": 877.172,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A15%3A18.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0076.json",
+   "seq": 76,
+   "monotonic_s": 892.521,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A15%3A18.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0077.json",
+   "seq": 77,
+   "monotonic_s": 907.844,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A15%3A18.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0078.json",
+   "seq": 78,
+   "monotonic_s": 923.18,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A15%3A18.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0079.json",
+   "seq": 79,
+   "monotonic_s": 938.524,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A15%3A18.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0080.json",
+   "seq": 80,
+   "monotonic_s": 953.856,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A15%3A18.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0081.json",
+   "seq": 81,
+   "monotonic_s": 965.669,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/v2/sessions/00000000-0000-4000-8000-00000000f1x7?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0082.json",
+   "seq": 82,
+   "monotonic_s": 969.22,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A15%3A18.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0083.json",
+   "seq": 83,
+   "monotonic_s": 984.546,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A15%3A18.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0084.json",
+   "seq": 84,
+   "monotonic_s": 999.855,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A15%3A18.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0085.json",
+   "seq": 85,
+   "monotonic_s": 1015.232,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A15%3A18.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0086.json",
+   "seq": 86,
+   "monotonic_s": 1030.585,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A15%3A18.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0087.json",
+   "seq": 87,
+   "monotonic_s": 1045.916,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A15%3A18.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0088.json",
+   "seq": 88,
+   "monotonic_s": 1061.302,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A15%3A18.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0089.json",
+   "seq": 89,
+   "monotonic_s": 1076.62,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A18%3A39.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0090.json",
+   "seq": 90,
+   "monotonic_s": 1086.066,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/v2/sessions/00000000-0000-4000-8000-00000000f1x7?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0091.json",
+   "seq": 91,
+   "monotonic_s": 1091.997,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A18%3A49.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0092.json",
+   "seq": 92,
+   "monotonic_s": 1107.3,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A19%3A09.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0093.json",
+   "seq": 93,
+   "monotonic_s": 1122.648,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A19%3A19.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0094.json",
+   "seq": 94,
+   "monotonic_s": 1137.987,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A19%3A39.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0095.json",
+   "seq": 95,
+   "monotonic_s": 1153.313,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A19%3A49.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0096.json",
+   "seq": 96,
+   "monotonic_s": 1168.652,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A20%3A09.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0097.json",
+   "seq": 97,
+   "monotonic_s": 1183.957,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A20%3A19.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0098.json",
+   "seq": 98,
+   "monotonic_s": 1199.254,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A20%3A39.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0099.json",
+   "seq": 99,
+   "monotonic_s": 1206.445,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/v2/sessions/00000000-0000-4000-8000-00000000f1x7?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  },
+  {
+   "file": "responses/0100.json",
+   "seq": 100,
+   "monotonic_s": 1214.669,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A20%3A49.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0101.json",
+   "seq": 101,
+   "monotonic_s": 1230.004,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A21%3A09.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0102.json",
+   "seq": 102,
+   "monotonic_s": 1245.296,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A21%3A09.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0103.json",
+   "seq": 103,
+   "monotonic_s": 1260.627,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A21%3A09.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0104.json",
+   "seq": 104,
+   "monotonic_s": 1275.93,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A21%3A09.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0105.json",
+   "seq": 105,
+   "monotonic_s": 1291.288,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A21%3A09.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0106.json",
+   "seq": 106,
+   "monotonic_s": 1306.615,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A21%3A09.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0107.json",
+   "seq": 107,
+   "monotonic_s": 1321.938,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A21%3A09.217Z",
+   "status": 200
+  },
+  {
+   "file": "responses/0108.json",
+   "seq": 108,
+   "monotonic_s": 1326.864,
+   "method": "GET",
+   "url": "https://livetrack.garmin.com/api/v2/sessions/00000000-0000-4000-8000-00000000f1x7?token=FAKETOKENFAKETOKENFAKETOKEN000",
+   "status": 200
+  }
+ ]
+}

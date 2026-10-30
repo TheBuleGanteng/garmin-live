@@ -1,0 +1,27 @@
+{
+ "body_base64": null,
+ "body_text": "{\"trackPoints\":[{\"dateTime\":\"2020-01-01T06:14:08.216Z\",\"reportedTime\":\"2020-01-01T06:13:54.437Z\",\"position\":{\"lat\":-32.9942281,\"lon\":-39.9945073},\"speed\":1.316,\"altitude\":100,\"totalDurationSecs\":812.4439697265625,\"speedMetersPerSec\":1.315999984741211,\"totalDistanceMeters\":696.77001953125,\"activityType\":\"RUNNING\",\"distanceMeters\":696.77001953125,\"durationSecs\":794.2890014648438,\"elevationSource\":\"GPS\",\"eventTypes\":[],\"heartRateBeatsPerMin\":145,\"cadenceCyclesPerMin\":56},{\"dateTime\":\"2020-01-01T06:14:18.216Z\",\"reportedTime\":\"2020-01-01T06:13:54.437Z\",\"position\":{\"lat\":-32.9942858,\"lon\":-39.9943571},\"speed\":1.437,\"altitude\":100,\"totalDurationSecs\":822.4439697265625,\"speedMetersPerSec\":1.437000036239624,\"totalDistanceMeters\":712.3200073242188,\"activityType\":\"RUNNING\",\"distanceMeters\":712.3200073242188,\"durationSecs\":804.2890014648438,\"elevationSource\":\"GPS\",\"eventTypes\":[],\"heartRateBeatsPerMin\":144,\"cadenceCyclesPerMin\":57},{\"dateTime\":\"2020-01-01T06:14:28.216Z\",\"reportedTime\":\"2020-01-01T06:13:54.437Z\",\"position\":{\"lat\":-32.9943245,\"lon\":-39.9942515},\"speed\":1.25,\"altitude\":100,\"totalDurationSecs\":832.4450073242188,\"speedMetersPerSec\":1.25,\"totalDistanceMeters\":723.1199951171875,\"activityType\":\"RUNNING\",\"distanceMeters\":723.1199951171875,\"durationSecs\":814.2899780273438,\"elevationSource\":\"GPS\",\"eventTypes\":[],\"heartRateBeatsPerMin\":145,\"cadenceCyclesPerMin\":58}]}",
+ "captured_at": "2020-01-01T06:14:00.215+00:00",
+ "monotonic_s": 769.729,
+ "request": {
+  "headers": {
+   "accept": "*/*",
+   "accept-language": "en-US",
+   "livetrack-csrf-token": "FAKE-CSRF-TOKEN-0000",
+   "referer": "https://livetrack.garmin.com/session/00000000-0000-4000-8000-00000000f1x7/token/FAKETOKENFAKETOKENFAKETOKEN000",
+   "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+   "x-garmin-livetrack-user-guid": "11111111-1111-4111-8111-111111111111"
+  },
+  "method": "GET",
+  "post_data": null,
+  "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A13%3A58.217Z"
+ },
+ "response": {
+  "headers": {
+   "content-encoding": "br",
+   "content-type": "application/json"
+  },
+  "status": 200
+ },
+ "seq": 67
+}

@@ -1,0 +1,27 @@
+{
+ "body_base64": null,
+ "body_text": "{\"trackPoints\":[{\"dateTime\":\"2020-01-01T06:19:59.216Z\",\"reportedTime\":\"2020-01-01T06:20:15.016Z\",\"position\":{\"lat\":-32.9953796,\"lon\":-39.9926073},\"speed\":1.437,\"altitude\":100,\"totalDurationSecs\":1200.7889404296875,\"speedMetersPerSec\":1.437000036239624,\"totalDistanceMeters\":930.4500122070312,\"activityType\":\"RUNNING\",\"distanceMeters\":930.4500122070312,\"durationSecs\":967.802978515625,\"elevationSource\":\"GPS\",\"eventTypes\":[],\"heartRateBeatsPerMin\":155,\"cadenceCyclesPerMin\":57},{\"dateTime\":\"2020-01-01T06:20:09.216Z\",\"reportedTime\":\"2020-01-01T06:20:15.016Z\",\"position\":{\"lat\":-32.9954443,\"lon\":-39.9924738},\"speed\":1.456,\"altitude\":100,\"totalDurationSecs\":1210.7889404296875,\"speedMetersPerSec\":1.4559999704360962,\"totalDistanceMeters\":944.7999877929688,\"activityType\":\"RUNNING\",\"distanceMeters\":944.7999877929688,\"durationSecs\":977.802978515625,\"elevationSource\":\"GPS\",\"eventTypes\":[],\"heartRateBeatsPerMin\":156,\"cadenceCyclesPerMin\":56}]}",
+ "captured_at": "2020-01-01T06:20:23.799+00:00",
+ "monotonic_s": 1153.313,
+ "request": {
+  "headers": {
+   "accept": "*/*",
+   "accept-language": "en-US",
+   "livetrack-csrf-token": "FAKE-CSRF-TOKEN-0000",
+   "referer": "https://livetrack.garmin.com/session/00000000-0000-4000-8000-00000000f1x7/token/FAKETOKENFAKETOKENFAKETOKEN000",
+   "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+   "x-garmin-livetrack-user-guid": "11111111-1111-4111-8111-111111111111"
+  },
+  "method": "GET",
+  "post_data": null,
+  "url": "https://livetrack.garmin.com/api/sessions/00000000-0000-4000-8000-00000000f1x7/track-points/common?token=FAKETOKENFAKETOKENFAKETOKEN000&begin=2020-01-01T06%3A19%3A49.217Z"
+ },
+ "response": {
+  "headers": {
+   "content-encoding": "br",
+   "content-type": "application/json"
+  },
+  "status": 200
+ },
+ "seq": 95
+}
