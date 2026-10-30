@@ -28,6 +28,7 @@ regexes = [
   '''\b192\.0\.2\.[0-9]{1,3}\b''',
   '''\b255\.255\.255\.[0-9]{1,3}\b''',
   '''\b(?:[0-9]+\.){3}[0-9]+\.[0-9]+''',
+  '''(?:Chrome|Chromium|Safari|Edg|Firefox|Version|AppleWebKit)/[0-9][0-9.]+''',
 ]
 
 # A LiveTrack session token or the MCP path secret pasted into code.
